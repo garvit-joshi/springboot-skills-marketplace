@@ -14,6 +14,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Integration test with Testcontainers (Spring Boot 4).
  *
@@ -44,9 +46,7 @@ class {{NAME}}IntegrationTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class)
-                .value(body -> {
-                    assert body.contains("UP");
-                });
+                .value(body -> assertThat(body).contains("UP"));
     }
 
     // Add more integration tests here
