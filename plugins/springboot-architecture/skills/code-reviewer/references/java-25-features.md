@@ -103,7 +103,7 @@ public class UserService {
 - [ ] Application has 10,000+ concurrent tasks (measure actual concurrency, not daily totals)
 - [ ] Workload is primarily I/O-bound (database, HTTP, file operations)
 - [ ] Thread pool exhaustion is observed in production metrics
-- [ ] Using Java 21+ and Spring Boot 3.2+
+- [ ] Using Java 21+ on Spring Boot 4 (or Spring Boot 3.2+ on legacy stacks)
 
 **IF requirements met, then migrate:**
 - [ ] Replace `@Async` thread pools with virtual threads config

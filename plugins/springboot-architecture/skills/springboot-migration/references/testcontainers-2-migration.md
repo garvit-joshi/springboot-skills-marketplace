@@ -160,14 +160,14 @@ LocalStackContainer localStackContainer() {
 import org.testcontainers.localstack.LocalStackContainer;
 
 LocalStackContainer localStackContainer() {
-    return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"));
+    return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
+            .withServices("s3", "sqs"); // strings, not Service.S3 / Service.SQS
 }
 ```
 
 **Changes:**
 - Package: `org.testcontainers.containers.localstack` → `org.testcontainers.localstack`
-- `.withServices()` **removed** (services auto-detected)
-- `LocalStackContainer.Service` **removed**
+- `LocalStackContainer.Service` enum **removed** — `.withServices(String...)` is the new API. Replace `Service.S3` with `"s3"`, `Service.SQS` with `"sqs"`, etc.
 - Image version: `3.0` → `latest`
 
 ### Other Common Containers
@@ -350,7 +350,8 @@ public class LocalStackConfig {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     public LocalStackContainer localStackContainer() {
-        return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"));
+        return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
+                .withServices("s3"); // string replaces Service.S3
     }
 
     @Bean
@@ -423,7 +424,8 @@ public class TestcontainersConfig {
 
     @Bean
     LocalStackContainer localstack() {
-        return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"));
+        return new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
+                .withServices("s3", "sqs"); // strings instead of Service.S3, Service.SQS
     }
 }
 ```
@@ -545,15 +547,18 @@ PostgreSQLContainer container = ...
 error: cannot find symbol LocalStackContainer.Service.S3
 ```
 
-**Cause:** Service enum removed in 2.x
+**Cause:** Service enum removed in 2.x — but `withServices(String...)` still exists.
 
 **Solution:**
 ```java
-// Remove
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
-.withServices(S3)
+// Remove the enum import
+// import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
-// Services now auto-detected
+// Replace the call with a string service name:
+// before: .withServices(S3)
+// after:
+container.withServices("s3");
+// or for multiple: container.withServices("s3", "sqs");
 ```
 
 ### Issue 4: Container Fails to Start
@@ -592,7 +597,7 @@ DockerImageName.parse("localstack/localstack:latest")
 
 ### Phase 3: Code Changes
 - [ ] Remove generic types from container declarations
-- [ ] Remove `.withServices()` from LocalStack configuration
+- [ ] Replace `LocalStackContainer.Service` enum constants in `.withServices(...)` with strings (e.g. `Service.S3` → `"s3"`)
 - [ ] Update `getEndpointOverride(Service)` to `getEndpoint()`
 - [ ] Update container image versions
 

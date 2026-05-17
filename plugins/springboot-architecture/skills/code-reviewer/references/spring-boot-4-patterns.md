@@ -336,9 +336,10 @@ import org.springframework.resilience.annotation.ConcurrencyLimit;
 
 @Service
 public class PaymentService {
+    // 1 initial attempt + maxRetries — up to 3 total invocations
     @Retryable(
         includes = {PaymentException.class},
-        maxAttempts = 3,
+        maxRetries = 2,
         delay = 1000,
         multiplier = 2
     )
@@ -661,7 +662,7 @@ spring:
 - 10,000+ concurrent requests
 - I/O-bound workload (database, HTTP, messaging)
 - Thread pool exhaustion observed in metrics
-- Java 21+ and Spring Boot 3.2+
+- Java 21+ on Spring Boot 4 (virtual threads have been GA since Java 21; Boot 4 enables them via `spring.threads.virtual.enabled=true`)
 
 ### Async Methods with Virtual Threads
 
@@ -771,7 +772,7 @@ Source: [Spring Boot 4.0 Migration Guide](https://github.com/spring-projects/spr
 
 ### 8. TestRestTemplate in Boot 4
 
-❌ `TestRestTemplate` → Deprecated in Spring Boot 4
+❌ `TestRestTemplate` autowired by default → no longer auto-provided by `@SpringBootTest` in Boot 4 (the class itself is still supported, not deprecated)
 ✅ Use `RestTestClient` (`org.springframework.test.web.servlet.client.RestTestClient`)
 
 ```java
@@ -827,11 +828,16 @@ public List<ProductVM> searchV2(@RequestParam("q") String query) { ... }
 spring:
   mvc:
     apiversion:
-      enabled: true
-      strategy: header
-      default-version: "1.0"
-      header-name: "API-Version"
+      default: "1.0"
+      supported: "1.0,2.0"
+      use:
+        header: X-API-Version
+        # query-parameter: version
+        # path-segment: 1
+        # media-type-parameter[application/json]: version
 ```
+
+The Java-config equivalent uses `WebMvcConfigurer.configureApiVersioning(ApiVersionConfigurer)` with `useRequestHeader`/`useQueryParam`/`useMediaTypeParameter`/`usePathSegment`. The `ApiVersionConfigurer` class is in `org.springframework.web.servlet.config.annotation`; the default parser is `SemanticApiVersionParser` in `org.springframework.web.accept`.
 
 Source: [API Versioning in Spring](https://spring.io/blog/2025/09/16/api-versioning-in-spring/)
 

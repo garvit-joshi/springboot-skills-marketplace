@@ -86,8 +86,15 @@ void shouldVerifyHexagonalArchitecture(String moduleName) {
 
 
 <!-- ============================================================ -->
-<!-- Testcontainers - For integration tests                       -->
+<!-- Testcontainers 2.x - For integration tests                   -->
 <!-- ============================================================ -->
+<!--
+  Testcontainers 2.0 (GA Nov 2025) renamed all module artifacts with the
+  `testcontainers-` prefix and relocated container classes to
+  `org.testcontainers.<module>` packages. Update imports accordingly:
+    org.testcontainers.containers.PostgreSQLContainer
+      -> org.testcontainers.postgresql.PostgreSQLContainer
+-->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-testcontainers</artifactId>
@@ -95,13 +102,18 @@ void shouldVerifyHexagonalArchitecture(String moduleName) {
 </dependency>
 <dependency>
     <groupId>org.testcontainers</groupId>
-    <artifactId>postgresql</artifactId>
+    <artifactId>testcontainers-junit-jupiter</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>testcontainers-postgresql</artifactId>
     <scope>test</scope>
 </dependency>
 <!-- Or for MySQL:
 <dependency>
     <groupId>org.testcontainers</groupId>
-    <artifactId>mysql</artifactId>
+    <artifactId>testcontainers-mysql</artifactId>
     <scope>test</scope>
 </dependency>
 -->
@@ -154,9 +166,11 @@ Spring Boot 4 highlights (see release notes and reference docs):
 8. JSpecify null-safety improvements
    - Template: package-info-jspecify.java
 
-External reference (non-official):
-- Resilience features example (annotations + @EnableResilientMethods):
-  https://github.com/sivaprasadreddy/spring-boot-4-features/tree/main/resilience-features
+Native resilience (@Retryable, @ConcurrencyLimit, RetryTemplate) is official in
+Spring Framework 7 — see https://spring.io/blog/2025/09/09/core-spring-resilience-features/
+and the EnableResilientMethods Javadoc. A community sample sits at
+https://github.com/sivaprasadreddy/spring-boot-4-features/tree/main/resilience-features
+for additional patterns, but Spring's blog and Javadoc are the primary references.
 -->
 
 

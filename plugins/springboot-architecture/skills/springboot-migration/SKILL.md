@@ -1,6 +1,6 @@
 ---
 name: springboot-migration
-description: Migrates Spring Boot applications to Boot 4 with Java 25, including related Spring Modulith 2 and Testcontainers 2 upgrade work. Use when the task is a concrete upgrade, dependency transition, starter rename, test-annotation migration, or phased migration plan. Do not use for greenfield project creation or for isolated repository design questions.
+description: Migrates Spring Boot applications to Boot 4 (Java 17 minimum, Java 25 recommended), including related Spring Modulith 2 and Testcontainers 2 upgrade work. Use when the task is a concrete upgrade, dependency transition, starter rename, test-annotation migration, or phased migration plan. Do not use for greenfield project creation or for isolated repository design questions.
 ---
 
 # Spring Boot Migration
@@ -13,7 +13,7 @@ Use this skill for phased upgrade work on existing Spring Boot applications. Thi
 
 - Never migrate blindly. Scan the codebase first.
 - Never apply every migration at once. Follow phased upgrades.
-- Treat Java 25, Spring Boot 4, Spring Modulith 2, and Testcontainers 2 as the intended target stack for this skill unless the user asks for a narrower target.
+- Treat Spring Boot 4, Spring Modulith 2, and Testcontainers 2 as the intended target stack for this skill unless the user asks for a narrower target. Boot 4's Java baseline is 17; recommend Java 25 for new compile targets but do not force an upgrade past what the migration actually requires.
 - Verify after each phase and stop when failures appear.
 
 ## Workflow

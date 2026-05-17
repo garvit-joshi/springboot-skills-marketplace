@@ -19,7 +19,7 @@ import java.util.List;
  */
 
 // ============================================================
-// APPROACH 1: JAVA RECORDS (RECOMMENDED FOR SPRING BOOT 3+)
+// APPROACH 1: JAVA RECORDS (RECOMMENDED)
 // ============================================================
 
 /**
@@ -68,21 +68,39 @@ public interface {{NAME}}Repository extends JpaRepository<{{NAME}}Entity, Long> 
     List<{{NAME}}Summary> findAllActiveSummaries();
 
     /**
-     * Nested Record - requires nested constructor expressions.
+     * Nested record — JPQL constructor expressions cannot be nested (Jakarta
+     * Persistence 3.2 forbids `NEW` inside another `NEW`, and Spring Data's
+     * class-based DTO projections do not support nested projections either).
+     *
+     * Two portable options:
+     *   (a) Select a flat record with scalar fields, assemble the nested
+     *       structure in the service layer.
+     *   (b) Use a Spring Data interface projection — interface projections do
+     *       support nested projections.
+     *
+     * Below is option (a): flat record from JPQL, then composed in Java.
      */
     @Query("""
-            SELECT new {{PACKAGE}}.{{MODULE}}.{{NAME}}Details(
+            SELECT new {{PACKAGE}}.{{MODULE}}.{{NAME}}FlatRow(
                 e.id, e.code, e.name,
-                new {{PACKAGE}}.{{MODULE}}.{{NAME}}Details$CategoryInfo(
-                    c.id, c.name
-                ),
+                c.id, c.name,
                 e.price, e.stock
             )
             FROM {{NAME}}Entity e
             JOIN e.category c
             WHERE e.id = :id
             """)
-    {{NAME}}Details findDetailsById(@Param("id") Long id);
+    {{NAME}}FlatRow findFlatDetailsById(@Param("id") Long id);
+
+    // Service-layer assembly (sketch):
+    // public {{NAME}}Details findDetailsById(Long id) {
+    //     var row = repository.findFlatDetailsById(id);
+    //     return new {{NAME}}Details(
+    //         row.id(), row.code(), row.name(),
+    //         new {{NAME}}Details.CategoryInfo(row.categoryId(), row.categoryName()),
+    //         row.price(), row.stock()
+    //     );
+    // }
 
     /**
      * Parameterized query with Record.
@@ -256,7 +274,7 @@ public interface {{NAME}}NativeRepository extends JpaRepository<{{NAME}}Entity, 
 
 /*
 1. WHEN TO USE WHAT:
-   - Java Records: Default choice for Spring Boot 3+ (clean, immutable)
+   - Java Records: Default choice (clean, immutable, work with JPQL constructor expressions)
    - Interface Projections: Simple cases, but watch out for N+1
    - POJO Classes: When you need custom equals/hashCode
    - Native Queries: Complex aggregations, database-specific features
@@ -331,6 +349,10 @@ public interface ProductStatsView {
 // Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
+    // JPQL has no LIMIT keyword. Pick one of:
+    //   - method-name pagination:        findTop20ByStatusOrderByX(...)
+    //   - Pageable / Limit parameter:    findByStatus(..., Limit.of(20))
+    //   - native query:                  @Query(value = "... LIMIT 20", nativeQuery = true)
     @Query("""
             SELECT new com.example.products.ProductSummary(
                 p.id, p.sku, p.name, p.price, p.stock
@@ -339,23 +361,39 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             WHERE p.status = 'ACTIVE'
             AND p.stock > 0
             ORDER BY p.salesRank ASC
-            LIMIT 20
             """)
-    List<ProductSummary> findTopSelling();
+    List<ProductSummary> findTopSelling(Limit limit); // call with Limit.of(20)
 
+    // Nested constructor expressions and GROUP_CONCAT aren't standard JPQL —
+    // use a flat projection in JPQL and assemble nested DTOs in Java, or drop
+    // to a native query when you need vendor functions like GROUP_CONCAT /
+    // STRING_AGG. The example below uses a flat ProductFlatRow and a separate
+    // query for image URLs.
     @Query("""
-            SELECT new com.example.products.ProductDetails(
+            SELECT new com.example.products.ProductFlatRow(
                 p.id, p.sku, p.name, p.description, p.price, p.stock,
-                new com.example.products.ProductDetails$CategoryInfo(
-                    c.id, c.name, c.slug
-                ),
-                (SELECT GROUP_CONCAT(i.url) FROM ProductImage i WHERE i.product = p)
+                c.id, c.name, c.slug
             )
             FROM ProductEntity p
             JOIN p.category c
             WHERE p.sku = :sku
             """)
-    ProductDetails findDetailsBySku(@Param("sku") String sku);
+    ProductFlatRow findFlatDetailsBySku(@Param("sku") String sku);
+
+    @Query("SELECT i.url FROM ProductImage i WHERE i.product.sku = :sku")
+    List<String> findImageUrlsBySku(@Param("sku") String sku);
+
+    // Service-layer assembly (sketch):
+    // public ProductDetails findDetailsBySku(String sku) {
+    //     var row = repository.findFlatDetailsBySku(sku);
+    //     var images = repository.findImageUrlsBySku(sku);
+    //     return new ProductDetails(
+    //         row.id(), row.sku(), row.name(), row.description(),
+    //         row.price(), row.stock(),
+    //         new ProductDetails.CategoryInfo(row.categoryId(), row.categoryName(), row.categorySlug()),
+    //         images
+    //     );
+    // }
 
     @Query(value = """
             SELECT

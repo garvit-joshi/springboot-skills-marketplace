@@ -262,9 +262,9 @@ class MigrationScanner:
         # Check for old imports
         old_imports = {
             'org.springframework.boot.test.mock.mockito.MockBean':
-                'org.springframework.boot.test.mock.mockito.MockitoBean',
+                'org.springframework.test.context.bean.override.mockito.MockitoBean',
             'org.springframework.boot.test.mock.mockito.SpyBean':
-                'org.springframework.boot.test.mock.mockito.MockitoSpyBean',
+                'org.springframework.test.context.bean.override.mockito.MockitoSpyBean',
             'org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest':
                 'org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest',
             'org.springframework.boot.autoconfigure.domain.EntityScan':
@@ -320,8 +320,8 @@ class MigrationScanner:
                         "CRITICAL",
                         str(rel_path),
                         i,
-                        "LocalStackContainer.Service enum removed",
-                        "Remove .withServices() - services are now auto-detected"
+                        "LocalStackContainer.Service enum removed in Testcontainers 2.x",
+                        "Replace enum constants with string service names: .withServices(LocalStackContainer.Service.S3) -> .withServices(\"s3\"). The withServices(String...) method itself still exists."
                     )
 
         # Note: org.springframework.resilience.* is used in the external sample repo.
@@ -373,8 +373,8 @@ class MigrationScanner:
                         "WARNING",
                         str(rel_path),
                         i,
-                        "TestRestTemplate is deprecated in Spring Boot 4",
-                        "Replace with RestTestClient (org.springframework.test.web.servlet.client.RestTestClient)"
+                        "TestRestTemplate is no longer auto-provided by @SpringBootTest in Spring Boot 4 (class itself still supported, not deprecated)",
+                        "Opt in via @AutoConfigureTestRestTemplate + spring-boot-resttestclient dep, or migrate to RestTestClient (org.springframework.test.web.servlet.client.RestTestClient)"
                     )
 
         # Check for manual HttpServiceProxyFactory setup

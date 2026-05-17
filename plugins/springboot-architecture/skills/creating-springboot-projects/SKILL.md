@@ -1,6 +1,6 @@
 ---
 name: creating-springboot-projects
-description: Creates Java 25 and Spring Boot 4 project structures, scaffolds, and implementation starting points for new services, REST APIs, and modular backends. Use when the task is to initialize a Spring Boot project, choose an architecture, select Spring Boot 4 features, or apply the bundled templates and references in this skill. Do not use for migrating existing projects or for isolated JPA/repository work without broader project-creation context.
+description: Creates Spring Boot 4 project structures, scaffolds, and implementation starting points for new services, REST APIs, and modular backends. Defaults to Java 25 for new projects (Boot 4's baseline is Java 17 — drop to 21 LTS or 17 only when explicitly requested). Use when the task is to initialize a Spring Boot project, choose an architecture, select Spring Boot 4 features, or apply the bundled templates and references in this skill. Do not use for migrating existing projects or for isolated JPA/repository work without broader project-creation context.
 ---
 
 # Creating Spring Boot Projects
@@ -13,7 +13,7 @@ Use this skill to create new Spring Boot 4 projects or define their structure be
 
 - Never jump straight to implementation before assessing project complexity.
 - Default to the simplest architecture that fits the domain.
-- Treat Java 25 and Spring Boot 4 as the target stack for this skill.
+- Treat Spring Boot 4 as the target. Default new projects to Java 25, but remember Boot 4's official baseline is Java 17 — accept Java 21 (LTS) or Java 17 when the user asks for them.
 - Read the reference files before choosing a higher-complexity architecture or optional framework feature.
 - Reuse the templates in `assets/` instead of rewriting the same scaffolding from scratch.
 
@@ -49,7 +49,7 @@ Use Spring Initializr and capture the baseline:
 - Project: Maven or Gradle
 - Language: Java
 - Spring Boot: 4.0.x
-- Java: 25
+- Java: 25 (recommended). Boot 4's minimum is Java 17; use 21 for an LTS-only stack, or 17 for stricter compatibility.
 
 Baseline dependencies for most projects:
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Spring Boot 4 (with Java 25) includes six major features that eliminate the need for external libraries and improve developer experience.
+Spring Boot 4 (built on Spring Framework 7; Java 17 minimum, Java 25 recommended for the newest language features) includes six major features that eliminate the need for external libraries and improve developer experience.
 
 ## 1. RestTestClient - Modern REST Testing
 
@@ -28,7 +28,7 @@ class ProductControllerTest {
     @BeforeEach
     void setup() {
         client = RestTestClient.bindToApplicationContext(context)
-                .apiVersionInserter(ApiVersionInserter.useHeader("API-Version"))
+                .apiVersionInserter(ApiVersionInserter.useHeader("X-API-Version"))
                 .build();
     }
 
@@ -86,19 +86,20 @@ import org.springframework.resilience.annotation.Retryable;
 @Service
 public class ProductService {
 
+    // 1 initial attempt + maxRetries — up to 5 total invocations here
     @Retryable(
         includes = {RuntimeException.class},
-        maxAttempts = 5,
+        maxRetries = 4,
         delay = 2000L  // milliseconds
     )
     public Optional<Product> fetchFromExternalApi(String id) {
         return externalClient.getById(id);
     }
 
-    // Optional: Advanced configuration with exponential backoff
+    // Optional: Advanced configuration with exponential backoff (up to 4 total invocations)
     @Retryable(
         includes = {IOException.class},
-        maxAttempts = 4,
+        maxRetries = 3,
         delay = 1000,
         multiplier = 2
     )
@@ -117,7 +118,7 @@ public class ProductService {
 **Parameters:**
 - `includes` - Exception types that trigger retry
 - `excludes` - Exception types that should never retry
-- `maxAttempts` - Maximum attempts including initial call (default: 3)
+- `maxRetries` - Number of retries after the initial attempt (default: 3 — total invocations = 1 + maxRetries)
 - `delay` / `delayString` - Delay between retries
 - `multiplier` - Exponential backoff multiplier
 - `maxDelay` - Maximum delay ceiling
@@ -168,8 +169,9 @@ public class DriverAssignmentService {
     private final RetryTemplate retryTemplate;
 
     public DriverAssignmentService() {
+        // 1 initial attempt + maxRetries — up to 11 total invocations
         RetryPolicy retryPolicy = RetryPolicy.builder()
-                .maxAttempts(10)
+                .maxRetries(10)
                 .delay(Duration.ofMillis(2000))
                 .multiplier(1.5)
                 .maxDelay(Duration.ofMillis(10000))
@@ -228,9 +230,10 @@ Source: [danvega/quick-bytes](https://github.com/danvega/quick-bytes) (Spring Bo
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
 </dependency>
+<!-- Use the Boot 4-specific starter (Resilience4j 2.2.0+ supports Spring Boot 4). -->
 <dependency>
     <groupId>io.github.resilience4j</groupId>
-    <artifactId>resilience4j-spring-boot3</artifactId>
+    <artifactId>resilience4j-spring-boot4</artifactId>
 </dependency>
 ```
 
@@ -260,7 +263,7 @@ resilience4j:
         sliding-window-size: 10
 ```
 
-**⚠️ Note:** As of December 2025, there are compatibility issues between Resilience4j and Spring Boot 4. Check the latest Resilience4j releases before upgrading.
+**⚠️ Note:** Verify the current Resilience4j release before upgrading — see [the Resilience4j releases page](https://github.com/resilience4j/resilience4j/releases). The dedicated `resilience4j-spring-boot4` module is the right starter for Boot 4; the older `resilience4j-spring-boot3` is for Boot 3 stacks.
 
 ## 3. HTTP Service Client Simplification
 
@@ -343,33 +346,43 @@ spring:
 spring:
   mvc:
     apiversion:
-      enabled: true
-      strategy: header  # or: path, query-parameter, media-type
-      default-version: "1.0"
-      header-name: "API-Version"
+      default: "1.0"
+      supported: "1.0,2.0"
+      use:
+        header: X-API-Version
+        # Alternative strategies (use only one resolver):
+        # query-parameter: version
+        # path-segment: 1
+        # media-type-parameter[application/json]: version
 ```
 
-**Configuration Option 2 - Java Beans:**
+**Configuration Option 2 - Java (`WebMvcConfigurer.configureApiVersioning`):**
 ```java
+import org.springframework.web.accept.SemanticApiVersionParser;
+import org.springframework.web.servlet.config.annotation.ApiVersionConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 @Configuration
-public class ApiVersioningConfig {
+public class ApiVersioningConfig implements WebMvcConfigurer {
 
-    @Bean
-    public ApiVersionResolver apiVersionResolver() {
-        return ApiVersionResolver.fromHeader("API-Version");
-        // Alternative: ApiVersionResolver.fromQueryParameter("version")
-        // Alternative: ApiVersionResolver.fromMediaType()
-    }
-
-    @Bean
-    public ApiVersionParser apiVersionParser() {
-        return ApiVersionParser.semantic();  // Supports semver (1.0.0, 2.1.3)
+    @Override
+    public void configureApiVersioning(ApiVersionConfigurer configurer) {
+        configurer
+                .useRequestHeader("X-API-Version")             // resolver
+                // .useQueryParam("version")
+                // .useMediaTypeParameter(MediaType.APPLICATION_JSON, "version")
+                // .usePathSegment(1)
+                .addSupportedVersions("1.0", "2.0")
+                .setDefaultVersion("1.0")
+                .setVersionParser(new SemanticApiVersionParser()); // optional — default
     }
 }
 ```
 
+Notes: `ApiVersionConfigurer` lives in `org.springframework.web.servlet.config.annotation`. The default parser is `SemanticApiVersionParser` from `org.springframework.web.accept`. There are no `ApiVersionResolver.fromHeader(...)` / `ApiVersionParser.semantic()` static factories.
+
 **Versioning Strategies:**
-1. **Request Header** (recommended): `API-Version: 2.0`
+1. **Request Header** (recommended): `X-API-Version: 2.0`
 2. **Query Parameter**: `/api/products?version=2.0`
 3. **Media Type**: `Accept: application/json;ver=2.0`
 4. **Path**: `/v2/api/products` (less common with native support)
@@ -396,7 +409,7 @@ public class ProductController {
 ```java
 client.get()
         .uri("/api/products/search?q=test")
-        .apiVersion("2.0")  // Sets API-Version header
+        .apiVersion("2.0")  // Sets X-API-Version header
         .exchange()
         .expectStatus().isOk();
 ```
@@ -540,6 +553,8 @@ Boot 4 uses modular starters. Add only what you need:
 </parent>
 
 <properties>
+    <!-- Boot 4 baseline is 17. Use 21 for an LTS-only stack, or 25 for the
+         newest language features. -->
     <java.version>25</java.version>
 </properties>
 ```
@@ -558,7 +573,7 @@ Boot 4 uses modular starters. Add only what you need:
 
 **Breaking Changes:**
 
-- TestRestTemplate still works but deprecated
+- TestRestTemplate still works (not deprecated) but is no longer auto-provided by `@SpringBootTest` — opt in with `@AutoConfigureTestRestTemplate`; prefer `RestTestClient` for new tests
 - @Retryable API different from Resilience4j version (different package and parameters)
 - HttpServiceProxyFactory manual setup still works but unnecessary
 - Circuit breaker still requires Resilience4j (check compatibility with Spring Boot 4)
@@ -568,7 +583,7 @@ Boot 4 uses modular starters. Add only what you need:
 1. Replace TestRestTemplate with RestTestClient in tests
 2. Replace Resilience4j @Retry with native @Retryable (requires @EnableResilientMethods)
    - Change package: `org.springframework.resilience.annotation.*`
-   - Update parameters: `retryFor` → `includes` (parameter `maxAttempts` keeps same name)
+   - Update parameters: `retryFor` → `includes`; `maxAttempts` (total) → `maxRetries` (retries after the first call — subtract 1, so `maxAttempts = 4` becomes `maxRetries = 3`)
 3. Keep Resilience4j for circuit breaker and advanced patterns
 4. Replace manual HTTP client setup with @ImportHttpServices
 5. Configure API versioning via spring.mvc.apiversion.* properties
