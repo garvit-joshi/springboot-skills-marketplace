@@ -2,6 +2,17 @@
 
 Use projections for read-only queries to fetch only needed columns.
 
+## Table of Contents
+
+1. [Java Records (Recommended)](#java-records-recommended)
+2. [Nested Records — not directly addressable in JPQL](#nested-records-not-directly-addressable-in-jpql)
+3. [Interface Projections](#interface-projections)
+4. [Native Queries with Projections](#native-queries-with-projections)
+5. [When to Use What](#when-to-use-what)
+6. [Hypersistence Utils (Optional)](#hypersistence-utils-optional)
+
+---
+
 ## Java Records (Recommended)
 
 ```java

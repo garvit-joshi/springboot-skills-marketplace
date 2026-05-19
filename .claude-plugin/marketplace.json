@@ -21,10 +21,7 @@
       "category": "spring-boot",
       "tags": ["spring-boot", "java", "architecture", "ddd", "hexagonal", "spring-data-jpa", "jpa", "hibernate"],
       "strict": false,
-      "agents": [
-        "./skills/creating-springboot-projects/SKILL.md",
-        "./skills/spring-data-jpa/SKILL.md"
-      ]
+      "skills": "./skills"
     }
   ]
 }

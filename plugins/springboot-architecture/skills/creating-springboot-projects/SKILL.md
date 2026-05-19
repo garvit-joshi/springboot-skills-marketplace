@@ -1,6 +1,6 @@
 ---
 name: creating-springboot-projects
-description: Creates Spring Boot 4 project structures, scaffolds, and implementation starting points for new services, REST APIs, and modular backends. Defaults to Java 25 for new projects (Boot 4's baseline is Java 17 — drop to 21 LTS or 17 only when explicitly requested). Use when the task is to initialize a Spring Boot project, choose an architecture, select Spring Boot 4 features, or apply the bundled templates and references in this skill. Do not use for migrating existing projects or for isolated JPA/repository work without broader project-creation context.
+description: Use when starting a new Spring Boot 4 project — scaffolding a service, REST API, or modular backend; picking an architecture (layered, package-by-module, modular-monolith, tomato, DDD-hexagonal); selecting Spring Boot 4 features; or applying the bundled templates and references in this skill. Not for migrating existing projects or for isolated JPA/repository work without broader project-creation context.
 ---
 
 # Creating Spring Boot Projects
@@ -42,6 +42,8 @@ Use this matrix as the default decision aid. If the choice is not obvious, read 
 | `tomato` | Rich domain modeling, value objects, stronger type safety | Medium-High |
 | `ddd-hexagonal` | Complex domains, CQRS, strong infrastructure isolation | High |
 
+> `tomato` is a value-object-heavy modular monolith: JPA entities embed VOs, validation lives in VO constructors, and Spring converters bind VOs at the request boundary. See `references/architecture-patterns.md` for the full definition.
+
 ### Step 3: Define the initial Boot 4 setup
 
 Use Spring Initializr and capture the baseline:
@@ -79,12 +81,32 @@ Read `references/spring-boot-4-features.md` before selecting:
 
 Use the bundled templates from `assets/` and replace placeholders only after the package and module names are settled.
 
+#### Placeholder convention
+
+Every template uses `{{TOKEN}}` placeholders. Resolve all of them before applying — templates do not compile until every placeholder is replaced. The full set used across `assets/`:
+
+| Placeholder | Replace with | Example |
+|-------------|--------------|---------|
+| `{{PACKAGE}}` | Base Java package | `com.acme.shop` |
+| `{{MODULE}}` | Feature/module name (lowercase) | `orders` |
+| `{{NAME}}` | Domain type name (PascalCase) | `Order`, `ProductSKU` |
+| `{{TYPE}}` | Wrapped scalar type inside a value object | `String`, `Long`, `BigDecimal` |
+| `{{FIELD}}` | Record field name (camelCase) | `code`, `amount` |
+| `{{TABLE_NAME}}` | Database table name (used in JPA `@Table`) | `orders` |
+| `{{TABLE}}` | Same meaning as `{{TABLE_NAME}}` — legacy variant kept only in `flyway-migration.sql` | `orders` |
+| `{{PROJECT_NAME}}` | Project artifactId / docker prefix (used only in `docker-compose.yml`) | `shop-api` |
+| `{{name}}` | HTTP service group identifier — **not** a lowercase variant of `{{NAME}}`. Appears only in commented `@ImportHttpServices(group = "...")` examples. | `orders` |
+
+If a template uses a placeholder not listed here, treat it as a typo and confirm the intended value before applying.
+
 Core project templates:
 
 - `assets/controller.java`
 - `assets/repository.java`
+- `assets/base-entity.java`
 - `assets/rich-entity.java`
 - `assets/value-object.java`
+- `assets/spring-converter.java`
 - `assets/service-cqrs.java`
 - `assets/exception-handler.java`
 - `assets/flyway-migration.sql`

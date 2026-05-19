@@ -1,5 +1,17 @@
 # Query Patterns Reference
 
+## Table of Contents
+
+1. [Simple Query Methods](#simple-query-methods)
+2. [@Query with JPQL](#query-with-jpql)
+3. [Pagination & Sorting](#pagination-sorting)
+4. [Bulk Operations](#bulk-operations)
+5. [Native Queries](#native-queries)
+6. [Convenience Default Methods](#convenience-default-methods)
+7. [N+1 Query Prevention](#n1-query-prevention)
+
+---
+
 ## Simple Query Methods
 
 Use derived query methods for simple lookups (1-2 properties):

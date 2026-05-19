@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Reviews Spring Boot 4 codebases (Java 17 baseline, Java 21+/25 common) — pull requests, files, and modules — for migration risks, architecture boundary violations, JSpecify null-safety issues, security flaws, performance regressions, and Spring Data pitfalls. Use when the task is a concrete Java or Spring code review with code context. Do not use for Kotlin-only code, non-Spring frameworks, or generic review advice without files or diffs.
+description: Use when reviewing Spring Boot 4 / Java 17+ code with concrete files or diffs — pull requests, modules, or pasted Java/Spring sources — for migration risks, architecture boundary leaks, JSpecify null-safety gaps, security flaws, performance regressions, or Spring Data pitfalls. Not for Kotlin-only code, non-Spring frameworks, or generic review advice without code context.
 ---
 
 # Spring Boot 4 Reviewer (Java 17+)

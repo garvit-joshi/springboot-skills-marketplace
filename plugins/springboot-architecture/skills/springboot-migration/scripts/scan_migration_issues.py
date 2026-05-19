@@ -61,12 +61,21 @@ class MigrationScanner:
         print(f"Scanning project: {self.project_path}")
         print("=" * 80)
 
-        # Scan pom.xml for versions and dependencies
+        # Scan build files — Maven and/or Gradle. Projects occasionally have both
+        # (e.g. mid-migration); scan whichever are present.
         pom_path = self.project_path / "pom.xml"
+        gradle_groovy = self.project_path / "build.gradle"
+        gradle_kotlin = self.project_path / "build.gradle.kts"
+
         if pom_path.exists():
             self._scan_pom(pom_path)
-        else:
-            print("⚠️  Warning: pom.xml not found (Maven project expected)")
+        if gradle_groovy.exists():
+            self._scan_gradle(gradle_groovy)
+        if gradle_kotlin.exists():
+            self._scan_gradle(gradle_kotlin)
+
+        if not (pom_path.exists() or gradle_groovy.exists() or gradle_kotlin.exists()):
+            print("⚠️  Warning: no pom.xml, build.gradle, or build.gradle.kts found")
 
         # Scan Java files
         self._scan_java_files()
@@ -77,12 +86,22 @@ class MigrationScanner:
         # Scan Flyway migrations
         self._scan_flyway_migrations()
 
+        # Resolve build-file label for post-scan warnings
+        if pom_path.exists():
+            build_file_ref = "pom.xml"
+        elif gradle_groovy.exists():
+            build_file_ref = "build.gradle"
+        elif gradle_kotlin.exists():
+            build_file_ref = "build.gradle.kts"
+        else:
+            build_file_ref = "build file"
+
         # Post-scan: check for missing modular HTTP client starters
         if self.uses_restclient and not self.has_restclient_starter:
             self.result.add_issue(
                 "Spring Boot 4 - Dependencies",
                 "WARNING",
-                "pom.xml",
+                build_file_ref,
                 0,
                 "RestClient used but spring-boot-starter-restclient not found",
                 "Boot 4 modular starters require spring-boot-starter-restclient for RestClient auto-configuration"
@@ -91,7 +110,7 @@ class MigrationScanner:
             self.result.add_issue(
                 "Spring Boot 4 - Dependencies",
                 "WARNING",
-                "pom.xml",
+                build_file_ref,
                 0,
                 "WebClient used but spring-boot-starter-webclient not found",
                 "Boot 4 modular starters require spring-boot-starter-webclient for WebClient auto-configuration"
@@ -189,7 +208,124 @@ class MigrationScanner:
             self.result.add_issue(
                 "Spring Boot 4 - Legacy Spring Retry",
                 "WARNING",
-                "pom.xml",
+                str(pom_path),
+                0,
+                "Legacy spring-retry dependency found",
+                "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"
+            )
+
+    def _scan_gradle(self, gradle_path: Path):
+        """Scan build.gradle or build.gradle.kts for dependency issues.
+
+        Handles both the Groovy DSL (single quotes, ``id 'foo' version 'x'``)
+        and the Kotlin DSL (double quotes, ``id("foo") version "x"``).
+        """
+        flavor = gradle_path.name
+        print(f"\n📦 Scanning {flavor}...")
+
+        try:
+            with open(gradle_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                lines = content.split('\n')
+        except Exception as e:
+            print(f"   Error reading {gradle_path}: {e}")
+            return
+
+        # Spring Boot plugin version — works for both DSLs:
+        #   id 'org.springframework.boot' version '4.0.0'
+        #   id("org.springframework.boot") version "4.0.0"
+        sb_plugin = re.search(
+            r"""id\s*[\(\s]+\s*['"]org\.springframework\.boot['"]\s*\)?\s*version\s*['"]([\d.]+(?:[-.\w]*)?)['"]""",
+            content,
+        )
+        if sb_plugin:
+            self.result.spring_boot_version = sb_plugin.group(1)
+
+        # Common property style for Modulith / Testcontainers versions:
+        #   ext { set('springModulithVersion', '2.0.0') }   (Groovy)
+        #   springModulithVersion = '2.0.0'                  (Groovy ext)
+        #   extra["springModulithVersion"] = "2.0.0"         (Kotlin)
+        for prop_pattern, target_attr, marks_modulith in [
+            (r"""springModulithVersion['"\]]*\s*[=,]\s*['"]([\d.]+(?:[-.\w]*)?)['"]""",
+             "spring_modulith_version", True),
+            (r"""testcontainersVersion['"\]]*\s*[=,]\s*['"]([\d.]+(?:[-.\w]*)?)['"]""",
+             "testcontainers_version", False),
+        ]:
+            m = re.search(prop_pattern, content)
+            if m:
+                setattr(self.result, target_attr, m.group(1))
+                if marks_modulith:
+                    self.modulith_in_use = True
+
+        # Spring Modulith presence by groupId/artifactId
+        if 'org.springframework.modulith' in content or 'spring-modulith' in content:
+            self.modulith_in_use = True
+
+        print(f"   Spring Boot: {self.result.spring_boot_version}")
+        print(f"   Spring Modulith: {self.result.spring_modulith_version}")
+        print(f"   Testcontainers: {self.result.testcontainers_version}")
+
+        # Dependency notation: 'group:artifact[:version]' or "group:artifact[:version]"
+        # Both DSLs use the same string form for the GAV coordinate.
+        dep_re = re.compile(
+            r"""['"]([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+)(?::([\w.+\-]+))?['"]"""
+        )
+
+        old_starters = {
+            'spring-boot-starter-web': 'spring-boot-starter-webmvc',
+            'spring-boot-starter-aop': 'spring-boot-starter-aspectj',
+        }
+        tc_old_artifacts = {'junit-jupiter', 'postgresql', 'mysql', 'localstack', 'mongodb'}
+
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if stripped.startswith('//') or stripped.startswith('#'):
+                continue
+            for m in dep_re.finditer(line):
+                group_id, artifact_id = m.group(1), m.group(2)
+
+                if group_id == 'org.springframework.boot' and artifact_id in old_starters:
+                    self.result.add_issue(
+                        "Spring Boot 4 - Dependencies",
+                        "CRITICAL",
+                        str(gradle_path),
+                        i,
+                        f"Old starter: {artifact_id}",
+                        f"Change to: {old_starters[artifact_id]} (or use spring-boot-starter-classic for gradual migration)"
+                    )
+
+                if group_id == 'org.springframework.security' and artifact_id == 'spring-security-test':
+                    self.result.add_issue(
+                        "Spring Boot 4 - Dependencies",
+                        "CRITICAL",
+                        str(gradle_path),
+                        i,
+                        "Old spring-security-test dependency",
+                        "Change to: spring-boot-starter-security-test"
+                    )
+
+                if group_id == 'org.testcontainers' and artifact_id in tc_old_artifacts:
+                    self.result.add_issue(
+                        "Testcontainers 2.x - Dependencies",
+                        "WARNING",
+                        str(gradle_path),
+                        i,
+                        f"Old Testcontainers artifact: {artifact_id}",
+                        f"Change to: testcontainers-{artifact_id}"
+                    )
+
+        # Track modular HTTP client starters
+        if 'spring-boot-starter-restclient' in content:
+            self.has_restclient_starter = True
+        if 'spring-boot-starter-webclient' in content:
+            self.has_webclient_starter = True
+
+        # Legacy spring-retry dependency
+        if 'spring-retry' in content:
+            self.result.add_issue(
+                "Spring Boot 4 - Legacy Spring Retry",
+                "WARNING",
+                str(gradle_path),
                 0,
                 "Legacy spring-retry dependency found",
                 "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"

@@ -1,6 +1,6 @@
 ---
 name: springboot-migration
-description: Migrates Spring Boot applications to Boot 4 (Java 17 minimum, Java 25 recommended), including related Spring Modulith 2 and Testcontainers 2 upgrade work. Use when the task is a concrete upgrade, dependency transition, starter rename, test-annotation migration, or phased migration plan. Do not use for greenfield project creation or for isolated repository design questions.
+description: Use when upgrading an existing Spring Boot application to Boot 4 — dependency transitions, starter renames, test-annotation migration (e.g. @MockBean → @MockitoBean), Jackson 3 issues, related Spring Modulith 2 or Testcontainers 2 upgrade work, or planning a phased migration. Not for greenfield project creation or isolated repository design.
 ---
 
 # Spring Boot Migration
@@ -20,10 +20,10 @@ Use this skill for phased upgrade work on existing Spring Boot applications. Thi
 
 ### Step 1: Scan the project
 
-Use the migration scanner before planning or editing:
+Use the migration scanner before planning or editing. It reads `pom.xml`, `build.gradle`, or `build.gradle.kts` (whichever the project has) plus Java sources, properties files, and Flyway migrations:
 
 ```bash
-python3 <SKILL_DIR>/scripts/scan_migration_issues.py /path/to/project
+python3 "${CLAUDE_SKILL_DIR}/scripts/scan_migration_issues.py" /path/to/project
 ```
 
 Use the scan output to identify:

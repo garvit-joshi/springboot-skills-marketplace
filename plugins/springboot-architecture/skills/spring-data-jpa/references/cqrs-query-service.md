@@ -2,6 +2,20 @@
 
 Separate read operations from write operations for Tomato/DDD architectures.
 
+## Table of Contents
+
+1. [Pattern](#pattern)
+2. [Query Service Implementation](#query-service-implementation)
+3. [View Models (Records)](#view-models-records)
+4. [Complex Queries with JOINs](#complex-queries-with-joins)
+5. [Pagination](#pagination)
+6. [Dynamic Search](#dynamic-search)
+7. [RowMapper for Complex Mappings](#rowmapper-for-complex-mappings)
+8. [Usage Pattern](#usage-pattern)
+9. [Benefits](#benefits)
+
+---
+
 ## Pattern
 
 - **Repository** (package-private): Write operations, returns entities

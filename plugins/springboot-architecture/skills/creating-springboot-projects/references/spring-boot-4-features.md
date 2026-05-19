@@ -1,5 +1,19 @@
 # Spring Boot 4 New Features Reference
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [1. RestTestClient - Modern REST Testing](#1-resttestclient---modern-rest-testing)
+3. [2. Native Resiliency Features](#2-native-resiliency-features)
+4. [3. HTTP Service Client Simplification](#3-http-service-client-simplification)
+5. [4. API Versioning](#4-api-versioning)
+6. [5. Spring Data AOT - Native Image Support](#5-spring-data-aot---native-image-support)
+7. [6. JSpecify Null-Safety](#6-jspecify-null-safety)
+8. [Dependencies](#dependencies)
+9. [Migration from Spring Boot 3](#migration-from-spring-boot-3)
+
+---
+
 ## Overview
 
 Spring Boot 4 (built on Spring Framework 7; Java 17 minimum, Java 25 recommended for the newest language features) includes six major features that eliminate the need for external libraries and improve developer experience.

@@ -1,5 +1,24 @@
 # Performance Optimization Guide
 
+## Table of Contents
+
+1. [N+1 Query Problem](#n1-query-problem)
+2. [Batch Operations](#batch-operations)
+3. [Pagination](#pagination)
+4. [Query Hints](#query-hints)
+5. [Read-Only Optimization](#read-only-optimization)
+6. [Connection Pooling](#connection-pooling)
+7. [Database Indexes](#database-indexes)
+8. [Use Projections for Lists](#use-projections-for-lists)
+9. [Avoid SELECT *](#avoid-select)
+10. [Stream Large Result Sets](#stream-large-result-sets)
+11. [Lazy Loading Best Practices](#lazy-loading-best-practices)
+12. [Enable SQL Logging (Development)](#enable-sql-logging-development)
+13. [Performance Checklist](#performance-checklist)
+14. [Monitoring](#monitoring)
+
+---
+
 ## N+1 Query Problem
 
 **The Issue:**

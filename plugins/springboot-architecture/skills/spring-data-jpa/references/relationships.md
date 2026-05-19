@@ -1,5 +1,18 @@
 # JPA Relationships Reference
 
+## Table of Contents
+
+1. [@ManyToOne (Recommended)](#manytoone-recommended)
+2. [@OneToOne (Use Sparingly)](#onetoone-use-sparingly)
+3. [@OneToMany (Avoid When Possible)](#onetomany-avoid-when-possible)
+4. [@ManyToMany → Join Entity (Required)](#manytomany-join-entity-required)
+5. [@ElementCollection (Value Types)](#elementcollection-value-types)
+6. [Cascade Types](#cascade-types)
+7. [Fetch Strategies](#fetch-strategies)
+8. [Best Practices Summary](#best-practices-summary)
+
+---
+
 ## @ManyToOne (Recommended)
 
 Most common and efficient relationship type.

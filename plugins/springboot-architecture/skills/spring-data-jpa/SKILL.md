@@ -1,6 +1,6 @@
 ---
 name: spring-data-jpa
-description: Designs and implements Spring Data JPA repositories, projections, query patterns, custom repositories, CQRS read models, entity relationships, and persistence performance fixes for Spring Boot 4 projects (Java 17+; Java 21/25 idioms welcome). Use when the task needs repository-boundary decisions or concrete JPA implementation patterns from this skill. Do not use for generic SQL help or project-wide migration work that belongs in another skill.
+description: Use when designing or implementing Spring Data JPA on Spring Boot 4 — repository boundaries, projections, query patterns, custom repositories, CQRS read models, entity relationships, or persistence performance fixes. Not for generic SQL help, database admin work, or project-wide migration that belongs in another skill.
 ---
 
 # Spring Data JPA Implementation

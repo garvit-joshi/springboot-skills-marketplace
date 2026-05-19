@@ -1,5 +1,14 @@
 # Migration Overview
 
+## Table of Contents
+
+1. [Common Migration Scenarios](#common-migration-scenarios)
+2. [Critical Migration Issues](#critical-migration-issues)
+3. [Migration Strategies](#migration-strategies)
+4. [References](#references)
+
+---
+
 ## Common Migration Scenarios
 
 ### Scenario 1: Spring Boot 3 → 4 Only
