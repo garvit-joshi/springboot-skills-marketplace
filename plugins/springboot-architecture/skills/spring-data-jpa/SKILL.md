@@ -1,6 +1,6 @@
 ---
 name: spring-data-jpa
-description: Use when designing or implementing Spring Data JPA on Spring Boot 4 — repository boundaries, projections, query patterns, custom repositories, CQRS read models, entity relationships, or persistence performance fixes. Not for generic SQL help, database admin work, or project-wide migration that belongs in another skill.
+description: Use when designing or implementing Spring Data JPA on Spring Boot 4 — repository boundaries, projections, query patterns, custom repositories, CQRS read models, entity relationships, or persistence performance fixes. Not for generic SQL help, database admin work, or project-wide migration (see the springboot-migration skill).
 ---
 
 # Spring Data JPA Implementation
@@ -71,6 +71,8 @@ Use the bundled templates in `assets/` instead of rebuilding the pattern from sc
 - `assets/custom-repository.java`
 - `assets/query-service.java`
 - `assets/relationship-patterns.java`
+
+> Templates use the same placeholder convention as `creating-springboot-projects` — `{{PACKAGE}}`, `{{MODULE}}`, `{{NAME}}`, `{{TABLE_NAME}}`, `{{TYPE}}`, `{{FIELD}}`. See `creating-springboot-projects/SKILL.md#placeholder-convention` for the full table.
 
 ### Step 5: Validate relationships and transaction boundaries
 

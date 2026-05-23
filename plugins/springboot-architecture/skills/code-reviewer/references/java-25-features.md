@@ -423,7 +423,7 @@ Collections.reverse(list); // Mutates!
 ```java
 String first = list.getFirst();
 String last = list.getLast();
-List<String> reversed = list.reversed(); // Immutable view
+List<String> reversed = list.reversed(); // Read-only view (writes throw UnsupportedOperationException)
 ```
 
 ---
@@ -447,10 +447,12 @@ String msg = String.format("Hello, %s! You are %d years old.", name, age);
 String msg = "Hello, " + name + "! You are " + age + " years old.";
 
 // ✅ Or text blocks for multi-line
+// Note: closing """ on its own line keeps a trailing newline. Strip it
+// with .stripTrailing(), or put the """ right after the last character.
 String msg = """
     Hello, %s!
     You are %d years old.
-    """.formatted(name, age);
+    """.stripTrailing().formatted(name, age);
 
 // ❌ NOT AVAILABLE: String templates
 // String msg = STR."Hello, \{name}! You are \{age} years old.";

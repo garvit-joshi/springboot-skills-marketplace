@@ -15,7 +15,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public record {{NAME}}(@JsonValue {{TYPE}} {{FIELD}}) {
 
-    @JsonCreator
+    // DELEGATING mode pairs with @JsonValue on the single component: Jackson
+    // deserializes the whole JSON scalar (e.g. "ABC-123") and hands it to the
+    // canonical/compact constructor, instead of expecting a JSON object with
+    // a {{FIELD}} property. Drop @JsonCreator entirely if Jackson 2.12+ /
+    // Jackson 3 record auto-detection is enough for your stack.
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public {{NAME}} {
         // Validation - fail fast at construction
         if ({{FIELD}} == null) {

@@ -133,12 +133,17 @@ OrderNumber orderNum = OrderNumber.generate();  // ✅ Valid
 ### 3. Email Address Value Object
 
 ```java
+// Prefer Jakarta Bean Validation's @Email at the request-boundary DTO and
+// keep the VO check lightweight. The Jakarta regex covers RFC 5321 / 5322
+// shape requirements (presence of `@`, a domain part with at least one dot,
+// no whitespace) far more correctly than a one-line regex — the regex below
+// is intentionally minimal and should be paired with @Email upstream.
 public record EmailAddress(@JsonValue String value) {
 
     private static final Pattern EMAIL_PATTERN =
-        Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+        Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public EmailAddress {
         if (value == null || !EMAIL_PATTERN.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid email address: " + value);

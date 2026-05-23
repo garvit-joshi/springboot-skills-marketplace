@@ -1,8 +1,9 @@
 # Docker Compose for local development
 #
-# Usage: docker-compose up -d
-
-version: '3.8'
+# Usage: docker compose up -d
+#
+# The legacy top-level `version:` key has been removed — the Compose Spec
+# (used by `docker compose`) ignores it and emits a deprecation warning.
 
 services:
   # ============================================================
