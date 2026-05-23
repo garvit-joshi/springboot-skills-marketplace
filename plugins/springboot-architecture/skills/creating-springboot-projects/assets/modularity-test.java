@@ -153,7 +153,7 @@ class ModularityTest {
 // <dependency>
 //     <groupId>org.springframework.modulith</groupId>
 //     <artifactId>spring-modulith-bom</artifactId>
-//     <version>1.2.0</version>
+//     <version>2.0.1</version>
 //     <type>pom</type>
 //     <scope>import</scope>
 // </dependency>

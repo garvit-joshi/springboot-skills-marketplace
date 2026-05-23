@@ -3,6 +3,7 @@ package {{PACKAGE}}.{{MODULE}}.domain;
 import {{PACKAGE}}.{{MODULE}}.domain.vo.*;
 import {{PACKAGE}}.{{MODULE}}.domain.models.{{NAME}}VM;
 import {{PACKAGE}}.shared.SpringEventPublisher;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
