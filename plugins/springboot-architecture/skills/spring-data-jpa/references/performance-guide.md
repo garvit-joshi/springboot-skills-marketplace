@@ -10,7 +10,7 @@
 6. [Connection Pooling](#connection-pooling)
 7. [Database Indexes](#database-indexes)
 8. [Use Projections for Lists](#use-projections-for-lists)
-9. [Avoid SELECT *](#avoid-select)
+9. [Avoid SELECT All Columns](#avoid-select-all-columns)
 10. [Stream Large Result Sets](#stream-large-result-sets)
 11. [Lazy Loading Best Practices](#lazy-loading-best-practices)
 12. [Enable SQL Logging (Development)](#enable-sql-logging-development)
@@ -163,7 +163,7 @@ List<Product> products = productRepository.findAll(); // Fetches all columns
 List<ProductSummary> summaries = productRepository.findAllSummaries(); // Only needed columns
 ```
 
-## Avoid SELECT *
+## Avoid SELECT All Columns
 
 **DON'T:**
 ```sql

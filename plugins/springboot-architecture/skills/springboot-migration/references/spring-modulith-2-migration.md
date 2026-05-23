@@ -7,7 +7,7 @@
 1. [Overview](#overview)
 2. [Version Update](#version-update)
 3. [Breaking Changes](#breaking-changes)
-4. [Event Store Schema Migration](#event-store-schema-migration)
+4. [Event Publication Table Migration](#event-publication-table-migration-required)
 5. [Configuration Changes](#configuration-changes)
 6. [Verification](#verification)
 

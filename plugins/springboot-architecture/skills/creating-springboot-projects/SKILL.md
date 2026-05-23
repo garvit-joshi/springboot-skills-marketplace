@@ -42,7 +42,7 @@ Use this matrix as the default decision aid. If the choice is not obvious, read 
 | `tomato` | Rich domain modeling, value objects, stronger type safety | Medium-High |
 | `ddd-hexagonal` | Complex domains, CQRS, strong infrastructure isolation | High |
 
-> `tomato` is a value-object-heavy modular monolith: JPA entities embed VOs, validation lives in VO constructors, and Spring converters bind VOs at the request boundary. See `references/architecture-patterns.md` for the full definition.
+> `tomato` is a value-object-heavy modular monolith: JPA entities embed VOs, validation lives in VO constructors, and Spring converters bind VOs at the request boundary. See `references/architecture-guide.md` for the full definition.
 
 ### Step 3: Define the initial Boot 4 setup
 

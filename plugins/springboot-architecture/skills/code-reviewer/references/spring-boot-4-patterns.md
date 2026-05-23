@@ -8,7 +8,7 @@
 4. [Test Annotations](#test-annotations)
 5. [Retry and Resilience](#retry-and-resilience)
 6. [Observability](#observability)
-7. [Problem Details (RFC 7807)](#problem-details)
+7. [Problem Details (RFC 7807)](#problem-details-rfc-7807)
 8. [Configuration](#configuration)
 9. [Virtual Threads Integration](#virtual-threads-integration)
 

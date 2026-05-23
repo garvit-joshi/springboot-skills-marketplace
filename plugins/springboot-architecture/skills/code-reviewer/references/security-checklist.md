@@ -4,13 +4,11 @@
 
 1. [OWASP Top 10 (2021)](#owasp-top-10)
 2. [Spring Security Patterns](#spring-security-patterns)
-3. [Authentication](#authentication)
-4. [Authorization](#authorization)
-5. [Input Validation](#input-validation)
-6. [Cryptography](#cryptography)
-7. [Session Management](#session-management)
-8. [API Security](#api-security)
-9. [Logging and Monitoring](#logging-and-monitoring)
+3. [Input Validation](#input-validation)
+4. [Review Checklist](#review-checklist)
+5. [Official Documentation](#official-documentation)
+
+Authentication / authorization, cryptography, session management, API security, and logging are folded into the [OWASP Top 10](#owasp-top-10) subsections (A01–A10) below.
 
 ---
 
