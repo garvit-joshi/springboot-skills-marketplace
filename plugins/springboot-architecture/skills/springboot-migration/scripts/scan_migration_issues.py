@@ -226,10 +226,20 @@ class MigrationScanner:
         try:
             with open(gradle_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-                lines = content.split('\n')
         except Exception as e:
             print(f"   Error reading {gradle_path}: {e}")
             return
+
+        # Strip /* ... */ block comments before parsing so deps inside disabled
+        # blocks don't surface as real issues. Replace each comment with the same
+        # number of newlines it spanned, so reported line numbers stay accurate.
+        content = re.sub(
+            r'/\*.*?\*/',
+            lambda m: '\n' * m.group(0).count('\n'),
+            content,
+            flags=re.DOTALL,
+        )
+        lines = content.split('\n')
 
         # Spring Boot plugin version — works for both DSLs:
         #   id 'org.springframework.boot' version '4.0.0'
@@ -278,10 +288,13 @@ class MigrationScanner:
         tc_old_artifacts = {'junit-jupiter', 'postgresql', 'mysql', 'localstack', 'mongodb'}
 
         for i, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith('//') or stripped.startswith('#'):
+            # Drop trailing line comments so `impl 'group:art' // note` still
+            # parses the dep, while fully-commented lines fall through below.
+            code = line.split('//', 1)[0]
+            stripped = code.strip()
+            if not stripped or stripped.startswith('#'):
                 continue
-            for m in dep_re.finditer(line):
+            for m in dep_re.finditer(code):
                 group_id, artifact_id = m.group(1), m.group(2)
 
                 if group_id == 'org.springframework.boot' and artifact_id in old_starters:
