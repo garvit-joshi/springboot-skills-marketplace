@@ -124,19 +124,33 @@ class MigrationScanner:
 
         with open(pom_path, 'r') as f:
             content = f.read()
-            lines = content.split('\n')
 
-        # Extract versions
-        spring_boot_match = re.search(r'<spring-boot\.version>([\d.]+)', content)
+        # Strip <!-- ... --> XML comments before parsing so commented-out
+        # dependencies aren't flagged as real issues. Replace each comment with
+        # the same number of newlines it spanned, so reported line numbers
+        # stay accurate.
+        content = re.sub(
+            r'<!--.*?-->',
+            lambda m: '\n' * m.group(0).count('\n'),
+            content,
+            flags=re.DOTALL,
+        )
+        lines = content.split('\n')
+
+        # Version patterns intentionally accept pre-release/snapshot suffixes
+        # (e.g. 4.0.0-RC1, 2.0.0-SNAPSHOT, 2.0.0-M3) instead of truncating to
+        # the leading digits.
+        version_value = r'([\d.]+(?:[-.\w]*)?)'
+        spring_boot_match = re.search(r'<spring-boot\.version>' + version_value, content)
         if spring_boot_match:
             self.result.spring_boot_version = spring_boot_match.group(1)
 
-        spring_modulith_match = re.search(r'<spring-modulith\.version>([\d.]+)', content)
+        spring_modulith_match = re.search(r'<spring-modulith\.version>' + version_value, content)
         if spring_modulith_match:
             self.result.spring_modulith_version = spring_modulith_match.group(1)
             self.modulith_in_use = True
 
-        testcontainers_match = re.search(r'<testcontainers\.version>([\d.]+)', content)
+        testcontainers_match = re.search(r'<testcontainers\.version>' + version_value, content)
         if testcontainers_match:
             self.result.testcontainers_version = testcontainers_match.group(1)
 
@@ -149,7 +163,9 @@ class MigrationScanner:
         ):
             self.modulith_in_use = True
 
-        # Check for old starters
+        # Check for old starters — verify the surrounding <dependency> block
+        # carries <groupId>org.springframework.boot</groupId> so a third-party
+        # artifact reusing the same name isn't misflagged.
         old_starters = {
             'spring-boot-starter-web': 'spring-boot-starter-webmvc',
             'spring-boot-starter-aop': 'spring-boot-starter-aspectj',
@@ -158,6 +174,9 @@ class MigrationScanner:
         for i, line in enumerate(lines, 1):
             for old, new in old_starters.items():
                 if f'<artifactId>{old}</artifactId>' in line:
+                    context = '\n'.join(lines[max(0, i-3):min(len(lines), i+2)])
+                    if '<groupId>org.springframework.boot</groupId>' not in context:
+                        continue
                     self.result.add_issue(
                         "Spring Boot 4 - Dependencies",
                         "CRITICAL",
@@ -203,16 +222,21 @@ class MigrationScanner:
         self.has_restclient_starter = 'spring-boot-starter-restclient' in content
         self.has_webclient_starter = 'spring-boot-starter-webclient' in content
 
-        # Check for legacy spring-retry dependency (should be removed for Boot 4)
-        if 'spring-retry' in content:
-            self.result.add_issue(
-                "Spring Boot 4 - Legacy Spring Retry",
-                "WARNING",
-                str(pom_path),
-                0,
-                "Legacy spring-retry dependency found",
-                "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"
-            )
+        # Check for legacy spring-retry dependency — require the real coordinate
+        # so incidental mentions in <description> / text don't fire.
+        for i, line in enumerate(lines, 1):
+            if '<artifactId>spring-retry</artifactId>' in line:
+                context = '\n'.join(lines[max(0, i-3):min(len(lines), i+2)])
+                if '<groupId>org.springframework.retry</groupId>' in context:
+                    self.result.add_issue(
+                        "Spring Boot 4 - Legacy Spring Retry",
+                        "WARNING",
+                        str(pom_path),
+                        i,
+                        "Legacy spring-retry dependency found",
+                        "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"
+                    )
+                    break
 
     def _scan_gradle(self, gradle_path: Path):
         """Scan build.gradle or build.gradle.kts for dependency issues.
@@ -287,10 +311,15 @@ class MigrationScanner:
         }
         tc_old_artifacts = {'junit-jupiter', 'postgresql', 'mysql', 'localstack', 'mongodb'}
 
+        spring_retry_reported = False
         for i, line in enumerate(lines, 1):
             # Drop trailing line comments so `impl 'group:art' // note` still
             # parses the dep, while fully-commented lines fall through below.
-            code = line.split('//', 1)[0]
+            # Only treat `//` as a comment when at the start of the line or
+            # preceded by whitespace, so `://` inside URL string literals
+            # (e.g. `maven { url 'https://repo' }`) isn't truncated.
+            comment_match = re.search(r'(^//|\s//)', line)
+            code = line[:comment_match.end(0) - 2] if comment_match else line
             stripped = code.strip()
             if not stripped or stripped.startswith('#'):
                 continue
@@ -327,22 +356,28 @@ class MigrationScanner:
                         f"Change to: testcontainers-{artifact_id}"
                     )
 
+                # Legacy spring-retry — coordinate-based, not substring, so
+                # incidental mentions in strings/comments don't fire.
+                if (
+                    not spring_retry_reported
+                    and group_id == 'org.springframework.retry'
+                    and artifact_id == 'spring-retry'
+                ):
+                    self.result.add_issue(
+                        "Spring Boot 4 - Legacy Spring Retry",
+                        "WARNING",
+                        str(gradle_path),
+                        i,
+                        "Legacy spring-retry dependency found",
+                        "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"
+                    )
+                    spring_retry_reported = True
+
         # Track modular HTTP client starters
         if 'spring-boot-starter-restclient' in content:
             self.has_restclient_starter = True
         if 'spring-boot-starter-webclient' in content:
             self.has_webclient_starter = True
-
-        # Legacy spring-retry dependency
-        if 'spring-retry' in content:
-            self.result.add_issue(
-                "Spring Boot 4 - Legacy Spring Retry",
-                "WARNING",
-                str(gradle_path),
-                0,
-                "Legacy spring-retry dependency found",
-                "Remove spring-retry dependency — Spring Framework 7 provides native @Retryable via org.springframework.resilience.annotation.*"
-            )
 
     def _scan_java_files(self):
         """Scan Java files for code issues"""
