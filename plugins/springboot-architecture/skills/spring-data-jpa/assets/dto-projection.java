@@ -168,16 +168,16 @@ public interface {{NAME}}InterfaceRepository extends JpaRepository<{{NAME}}Entit
     List<{{NAME}}View> findFeatured();
 
     /**
-     * With nested projection - MUST include JOIN.
+     * Nested interface projection via DERIVED QUERY — not @Query.
+     *
+     * Dotted aliases like `c.id as category.id` in @Query do not bind to
+     * nested interface projections; Spring Data only resolves nested
+     * interfaces when it generates the query from the method name (and the
+     * property path on the entity). If you need explicit JPQL with a JOIN,
+     * fall back to a flat class-based DTO and assemble the nested shape in
+     * the service layer.
      */
-    @Query("""
-            SELECT e.id as id, e.name as name,
-                   c.id as category.id, c.name as category.name
-            FROM {{NAME}}Entity e
-            JOIN e.category c
-            WHERE e.status = 'ACTIVE'
-            """)
-    List<{{NAME}}WithCategory> findActiveWithCategory();
+    List<{{NAME}}WithCategory> findByStatusOrderByName({{NAME}}Status status);
 
     /**
      * Alternative: Use class-based projection in same query.

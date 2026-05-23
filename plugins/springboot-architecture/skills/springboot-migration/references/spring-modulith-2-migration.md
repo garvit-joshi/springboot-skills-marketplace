@@ -81,9 +81,11 @@
 
 **Migration requirement:**
 ```sql
--- Example: Update existing event_publication table
+-- PostgreSQL example. Modulith 2.x ships PostgreSQL schemas that use TEXT
+-- for status / listener_id / event_type / serialized_event. Other dialects
+-- (H2, HSQLDB, MySQL, etc.) use VARCHAR — match your dialect's shipped schema.
 ALTER TABLE event_publication
-  ADD COLUMN status VARCHAR(20),
+  ADD COLUMN status TEXT,
   ADD COLUMN completion_attempts INT,
   ADD COLUMN last_resubmission_date TIMESTAMP WITH TIME ZONE;
 
@@ -123,9 +125,11 @@ ALTER TABLE event_publication
 **Migration example (adjust for your database):**
 
 ```sql
--- PostgreSQL example
+-- PostgreSQL example. Modulith's PostgreSQL v2 schema uses TEXT for the
+-- string columns (status / listener_id / event_type / serialized_event);
+-- check your dialect's shipped schema if you're not on PostgreSQL.
 ALTER TABLE event_publication
-  ADD COLUMN IF NOT EXISTS status VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS status TEXT,
   ADD COLUMN IF NOT EXISTS completion_attempts INT DEFAULT 0,
   ADD COLUMN IF NOT EXISTS last_resubmission_date TIMESTAMP WITH TIME ZONE;
 
@@ -135,14 +139,14 @@ UPDATE event_publication SET status = 'PUBLISHED' WHERE status IS NULL;
 
 **Complete schema reference:** See [Spring Modulith Reference - Event Publication Registry](https://docs.spring.io/spring-modulith/reference/appendix.html)
 
-**Expected columns in event_publication table:**
-- `id` (UUID/VARCHAR primary key)
-- `listener_id` (VARCHAR 512)
-- `event_type` (VARCHAR 512)
-- `serialized_event` (TEXT/VARCHAR)
+**Expected columns in event_publication table** (types are dialect-specific — values shown are PostgreSQL; other dialects use sized VARCHAR — see the official schema files):
+- `id` (UUID primary key)
+- `listener_id` (TEXT)
+- `event_type` (TEXT)
+- `serialized_event` (TEXT)
 - `publication_date` (TIMESTAMP WITH TIME ZONE)
 - `completion_date` (TIMESTAMP WITH TIME ZONE, nullable)
-- `status` (VARCHAR 20) - **NEW in 2.0**
+- `status` (TEXT) - **NEW in 2.0**
 - `completion_attempts` (INT) - **NEW in 2.0**
 - `last_resubmission_date` (TIMESTAMP WITH TIME ZONE) - **NEW in 2.0**
 
@@ -387,11 +391,10 @@ ERROR: column "completion_attempts" does not exist
 
 **Cause:** Event publication table not migrated to Spring Modulith 2.0 schema
 
-**Solution:**
+**Solution:** (PostgreSQL — match your dialect's shipped schema for the string types)
 ```sql
--- Add missing columns
 ALTER TABLE event_publication
-  ADD COLUMN IF NOT EXISTS status VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS status TEXT,
   ADD COLUMN IF NOT EXISTS completion_attempts INT DEFAULT 0,
   ADD COLUMN IF NOT EXISTS last_resubmission_date TIMESTAMP WITH TIME ZONE;
 ```

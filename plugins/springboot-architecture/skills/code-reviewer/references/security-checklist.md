@@ -499,14 +499,14 @@ private String secret;  // From environment, at least 256 bits
 // Or better: use asymmetric keys (RS256)
 ```
 
-✅ **Secure: JWT validation**
+✅ **Secure: JWT validation (JJWT 0.12+)**
 ```java
 public boolean validateToken(String token) {
     try {
-        Jwts.parserBuilder()
-            .setSigningKey(key)
+        Jwts.parser()
+            .verifyWith(key)          // SecretKey or PublicKey
             .build()
-            .parseClaimsJws(token);
+            .parseSignedClaims(token);
         return true;
     } catch (JwtException | IllegalArgumentException e) {
         log.error("Invalid JWT token: {}", e.getMessage());
@@ -514,6 +514,8 @@ public boolean validateToken(String token) {
     }
 }
 ```
+
+> `Jwts.parserBuilder() / setSigningKey() / parseClaimsJws()` is the pre-0.12 API and is deprecated. Use `parser() / verifyWith() / parseSignedClaims()` on JJWT 0.12+.
 
 **Review Points:**
 - [ ] JWT secret at least 256 bits (or use RS256)

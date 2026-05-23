@@ -217,14 +217,22 @@ public class JacksonConfig implements Jackson2ObjectMapperBuilderCustomizer {
 
 ✅ **Spring Boot 4**
 ```java
+import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
+import org.springframework.stereotype.Component;
+
 @Component
 public class JacksonConfig implements JsonMapperBuilderCustomizer {
     @Override
-    public void customize(JsonMapperBuilder builder) {
-        builder.serializationInclusion(JsonInclude.Include.NON_NULL);
+    public void customize(JsonMapper.Builder jsonMapperBuilder) {
+        jsonMapperBuilder.changeDefaultPropertyInclusion(
+            incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL));
     }
 }
 ```
+
+> The parameter type is the `Builder` inner class on `tools.jackson.databind.json.JsonMapper`, not a top-level `JsonMapperBuilder`. Use the `changeDefaultPropertyInclusion(UnaryOperator)` builder method (Jackson 3 replacement for `serializationInclusion(...)`).
 
 ---
 

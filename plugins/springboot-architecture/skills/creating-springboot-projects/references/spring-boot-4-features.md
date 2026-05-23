@@ -244,7 +244,7 @@ Source: [danvega/quick-bytes](https://github.com/danvega/quick-bytes) (Spring Bo
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
 </dependency>
-<!-- Use the Boot 4-specific starter (Resilience4j 2.2.0+ supports Spring Boot 4). -->
+<!-- Use the Boot 4-specific starter. The dedicated resilience4j-spring-boot4 module is currently 2.4.0 on Maven Central — confirm the latest at https://central.sonatype.com/artifact/io.github.resilience4j/resilience4j-spring-boot4 before pinning. -->
 <dependency>
     <groupId>io.github.resilience4j</groupId>
     <artifactId>resilience4j-spring-boot4</artifactId>
