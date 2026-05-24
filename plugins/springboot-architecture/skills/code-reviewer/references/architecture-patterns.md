@@ -57,7 +57,7 @@ This guide demonstrates five architectural approaches, progressively increasing 
 | **Team Size** | 1-3 | 3-10 | 5-15 | 5-15 | 10+ |
 | **Expected Lifespan** | Months | 1-2 years | 2-5 years | 3-5 years | 5+ years |
 
-> ¹ `@ApplicationModuleListener` does **not** automatically persist events. Persistence requires one of `spring-modulith-starter-jdbc` / `-jpa` / `-mongodb` / `-neo4j` plus the backing `event_publication` table (Modulith 2.x schema). Without the registry starter, listeners fall back to plain Spring `@EventListener` semantics with no replay or durability. See: https://docs.spring.io/spring-modulith/reference/events.html
+> ¹ `@ApplicationModuleListener` is always `@Async + @Transactional(propagation = REQUIRES_NEW) + @TransactionalEventListener` — those semantics don't change with the registry. What the **Event Publication Registry** adds is **persistence and replay**: with one of `spring-modulith-starter-jdbc` / `-jpa` / `-mongodb` / `-neo4j` plus the backing storage (e.g. the `event_publication` table for JDBC/JPA), incomplete publications are durably tracked and can be resubmitted; without the registry, the listener still runs async-after-commit in its own transaction, but a crash between the original commit and the listener completing loses the event. See: https://docs.spring.io/spring-modulith/reference/events.html
 
 ---
 
@@ -248,7 +248,7 @@ Package-by-module architecture plus Spring Modulith boundary enforcement and (op
 
 ### What's Added
 - `ApplicationModules.of(App.class).verify()` tests to prevent forbidden dependencies
-- `@ApplicationModuleListener` for transactional cross-module events — becomes **persistent, replayable, and retried** only when an event registry starter is on the classpath (`spring-modulith-starter-jdbc` / `-jpa` / `-mongodb` / `-neo4j`) **and** the `event_publication` table exists. Without that starter, listeners behave like ordinary transactional Spring `@EventListener`s with no replay or durability.
+- `@ApplicationModuleListener` for transactional cross-module events. The annotation always runs as `@Async + @Transactional(REQUIRES_NEW) + @TransactionalEventListener` — i.e. asynchronously after the publishing transaction commits, in a new transaction of its own. It becomes **persistent, replayable, and retried** only when an event registry starter is on the classpath (`spring-modulith-starter-jdbc` / `-jpa` / `-mongodb` / `-neo4j`) **and** the backing storage (e.g. the `event_publication` table for JDBC/JPA) exists. Without that registry, the async/transactional behaviour is unchanged, but in-flight publications are not durable across restarts and cannot be replayed.
 - Module metadata for visualization (optional)
 
 ### Choose When
@@ -326,8 +326,15 @@ Value-object-heavy, richer domain within a modular monolith. JPA entities embed 
 ### Simple Example
 
 ```java
-// Value Object (see value-objects-patterns.md for full implementation)
+// Value Object — must be annotated @Embeddable to be usable in @Embedded
+// fields below. Jakarta Persistence 3.2 allows records as embeddable classes
+// (Hibernate 6.2+); the @Embeddable annotation on the record itself is still
+// required. See value-objects-patterns.md for the full pattern.
+@Embeddable
 public record OrderNumber(@JsonValue String value) { /* validation in constructor */ }
+
+@Embeddable
+public record Money(BigDecimal amount, Currency currency) { /* validation */ }
 
 // Rich Entity
 @Entity

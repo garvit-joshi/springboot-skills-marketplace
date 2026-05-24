@@ -16,11 +16,11 @@
 
 ## Overview
 
-Spring Boot 4 (built on Spring Framework 7; Java 17 minimum, Java 25 recommended for the newest language features) includes six major features that eliminate the need for external libraries and improve developer experience.
+Spring Boot 4 (built on Spring Framework 7; Java 17 minimum) includes six major features that eliminate the need for external libraries and improve developer experience. Recommended toolchain: Java 25 — the current LTS, which Boot 4's tooling and Spring's null-safety guidance both target. Java 26 (GA March 2026) is the newest feature release but not an LTS; only adopt it if a project policy already moves to non-LTS releases.
 
 ## 1. RestTestClient - Modern REST Testing
 
-**Replaces:** TestRestTemplate
+**Recommended new HTTP test client.** `TestRestTemplate` is not deprecated, but `@SpringBootTest` no longer auto-provides it in Boot 4 — opt in via `@AutoConfigureTestRestTemplate` to keep existing tests, or migrate to `RestTestClient` for new ones.
 
 **Benefits:**
 - Fluent, readable API for integration tests
@@ -72,13 +72,13 @@ class ProductControllerTest {
 ## 2. Native Resiliency Features
 
 **What's Native in Spring Framework 7:**
-- `@Retryable` - Automatic retry support (from Spring Retry integration)
-- `@ConcurrencyLimit` - Concurrency control and rate limiting
+- `@Retryable` — automatic retry with backoff (`org.springframework.resilience.annotation`)
+- `@ConcurrencyLimit` — concurrent-invocation throttling. From the Framework reference: "specifies a concurrency limit for an individual method ... meant to protect the target resource from being accessed from too many threads at the same time, similar to the effect of a pool size limit for a thread pool or a connection pool that blocks access if its limit is reached." This is **not** time-window rate limiting and **not** the Resilience4j bulkhead.
 
 **What Still Requires External Libraries:**
 - Circuit Breaker → Resilience4j (`spring-cloud-starter-circuitbreaker-resilience4j`)
-- Advanced rate limiting → Resilience4j
-- Bulkhead patterns → Resilience4j
+- Time-window rate limiting (requests-per-second budgets) → Resilience4j or Bucket4j; `@ConcurrencyLimit` only caps in-flight concurrency.
+- Resilience4j-style Bulkhead with queueing semantics → Resilience4j
 
 **Benefits:**
 - Native retry and concurrency features with zero dependencies
@@ -142,7 +142,7 @@ public class ProductService {
 - Database operations during brief connection issues
 - Network operations with temporary disruptions
 
-### @ConcurrencyLimit - Rate Limiting (NATIVE)
+### @ConcurrencyLimit - Concurrent Invocation Throttling (NATIVE)
 
 ```java
 import org.springframework.resilience.annotation.ConcurrencyLimit;
@@ -150,24 +150,27 @@ import org.springframework.resilience.annotation.ConcurrencyLimit;
 @Service
 public class ReportService {
 
-    @ConcurrencyLimit(2)  // Max 2 concurrent executions
+    @ConcurrencyLimit(2)  // At most 2 invocations in flight at any time
     public void processExpensiveOperation(String id) {
         performExpensiveWork(id);
     }
 }
 ```
 
+Semantics: when the third caller arrives while 2 invocations are already running, it **blocks** until a slot frees up — same shape as a fixed-size connection pool. It is not a time-window rate limit and does not implement Resilience4j-style bulkhead queueing.
+
 **Configuration:**
 - Requires `@EnableResilientMethods` on a `@Configuration` class
 - Package: `org.springframework.resilience.annotation.*`
-- Particularly valuable with Virtual Threads for controlling parallelism
-- Implements bulkhead pattern for resource isolation
+- Particularly valuable with Virtual Threads, where caller threads are cheap and back-pressure has to come from somewhere
 
-**Use cases:**
-- Limit expensive operations (heavy DB queries)
-- Prevent thread pool exhaustion
-- Rate limiting for external API calls
-- Bulkhead pattern implementation
+**Good fits:**
+- Cap concurrent calls into an expensive downstream (DB report query, slow third-party API) to protect the resource
+- Hold the in-flight count below a known safe ceiling regardless of how many caller threads exist
+
+**NOT this annotation's job:**
+- Time-window rate limiting ("≤ 100 requests/sec") — use Resilience4j or Bucket4j
+- Resilience4j-style Bulkhead with explicit queue depth / wait timeout semantics — use Resilience4j
 
 ### RetryTemplate - Programmatic Retry (NATIVE)
 
@@ -567,8 +570,9 @@ Boot 4 uses modular starters. Add only what you need:
 </parent>
 
 <properties>
-    <!-- Boot 4 baseline is 17. Use 21 for an LTS-only stack, or 25 for the
-         newest language features. -->
+    <!-- Boot 4 baseline is 17. Recommended: 25 (current LTS). Use 21 for the
+         previous LTS, 17 for stricter compatibility, or 26 (GA 2026-03-17)
+         only when your project tracks non-LTS feature releases. -->
     <java.version>25</java.version>
 </properties>
 ```
@@ -577,7 +581,7 @@ Boot 4 uses modular starters. Add only what you need:
 
 | Spring Boot 3 | Spring Boot 4 | Notes |
 |---------------|---------------|-------|
-| TestRestTemplate | RestTestClient | More fluent API, better type safety |
+| TestRestTemplate (auto-wired in Boot 3) | RestTestClient + `@AutoConfigureRestTestClient` (Boot 4) | `TestRestTemplate` is still supported; opt in with `@AutoConfigureTestRestTemplate`. New tests should prefer `RestTestClient`. |
 | Resilience4j @Retry | @Retryable (native) | Now built into Spring Framework 7 |
 | Manual concurrency control | @ConcurrencyLimit (native) | Now built into Spring Framework 7 |
 | Resilience4j @CircuitBreaker | Still Resilience4j | Circuit breaker NOT native, still requires external library |
@@ -594,7 +598,7 @@ Boot 4 uses modular starters. Add only what you need:
 
 **Migration Strategy:**
 
-1. Replace TestRestTemplate with RestTestClient in tests
+1. For tests still using `TestRestTemplate`, either add `@AutoConfigureTestRestTemplate` (minimum change) or migrate the test to `RestTestClient` + `@AutoConfigureRestTestClient`. `TestRestTemplate` itself is not deprecated.
 2. Replace Resilience4j @Retry with native @Retryable (requires @EnableResilientMethods)
    - Change package: `org.springframework.resilience.annotation.*`
    - Update parameters: `retryFor` → `includes`; `maxAttempts` (total) → `maxRetries` (retries after the first call — subtract 1, so `maxAttempts = 4` becomes `maxRetries = 3`)

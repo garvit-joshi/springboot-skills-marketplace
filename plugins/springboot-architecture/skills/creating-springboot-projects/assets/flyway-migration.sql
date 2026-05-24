@@ -67,16 +67,20 @@ CREATE INDEX idx_products_created_at ON products(created_at);
 -- EVENTS TABLE (Modular Monolith with Spring Modulith)
 -- ============================================================
 
--- @ApplicationModuleListener is transactional by default. To make events
--- PERSISTENT and REPLAYABLE you must:
+-- @ApplicationModuleListener always runs as
+-- @Async + @Transactional(REQUIRES_NEW) + @TransactionalEventListener — i.e.
+-- async, after the publishing transaction commits, in its own new transaction.
+-- To make these publications PERSISTENT and REPLAYABLE you must:
 --   1. add a Modulith event registry starter to your build, one of:
 --        spring-modulith-starter-jdbc
 --        spring-modulith-starter-jpa
 --        spring-modulith-starter-mongodb
 --        spring-modulith-starter-neo4j
---   2. provision the event_publication table (this file).
--- Without the starter, @ApplicationModuleListener behaves like a plain
--- transactional Spring @EventListener with no durability or replay.
+--   2. provision the registry's backing storage. For the JDBC/JPA starters
+--      that is the event_publication table (this file).
+-- Without a registry starter, @ApplicationModuleListener still runs the same
+-- async-after-commit transaction, but in-flight publications are not durable
+-- across restarts and cannot be replayed.
 --
 -- Modulith ships a dialect-specific schema for each store — copy the one
 -- that matches your database from:

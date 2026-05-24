@@ -31,7 +31,10 @@ import java.util.Set;
  * - Avoid bidirectional relationships when possible
  * - Use JOIN FETCH in queries instead of EAGER
  * - Prefer @ManyToOne over @OneToMany
- * - Never use @ManyToMany - use join entity
+ * - Prefer an explicit join entity over plain @ManyToMany when the
+ *   relationship has attributes or needs to be queried as an entity;
+ *   plain @ManyToMany is part of the JPA spec and is fine for pure
+ *   tagging-style links with no link data
  * - Consider using IDs instead of associations for loose coupling
  */
 

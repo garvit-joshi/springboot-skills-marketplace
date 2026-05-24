@@ -79,8 +79,15 @@ spring:
 ### Use saveAll()
 ```java
 List<Product> products = createManyProducts();
-productRepository.saveAll(products); // Uses batch insert
+productRepository.saveAll(products); // Iterates and calls save() per entity
 ```
+
+> **Important:** `SimpleJpaRepository#saveAll` is implemented as a loop over `save(entity)` — it does **not** automatically batch on its own. To get real JDBC batch inserts you need to:
+> 1. Set `hibernate.jdbc.batch_size` (e.g. `25`–`50`) and ideally `hibernate.order_inserts=true` / `order_updates=true`.
+> 2. Use a non-IDENTITY ID strategy — `GenerationType.IDENTITY` forces a per-row round trip and disables batching; prefer `SEQUENCE` (allocation-size > 1) or an application-generated ID (TSID/UUID).
+> 3. Avoid intervening flushes inside the loop.
+>
+> Without those, `saveAll` issues one INSERT per row regardless of the call shape.
 
 ### Flush & Clear for Large Batches
 ```java

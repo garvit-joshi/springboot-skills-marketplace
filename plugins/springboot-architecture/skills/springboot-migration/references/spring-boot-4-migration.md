@@ -20,14 +20,14 @@
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| **Java** | 17 | 21+ (25 for latest features) |
+| **Java** | 17 | 25 (current LTS). Java 26 is the newest feature release (GA March 2026) but is not an LTS — use it only when the project tracks non-LTS releases. |
 | **Spring Boot** | 4.0.0 | 4.0.x (latest stable) |
 | **Jakarta EE** | 11 | 11 |
 | **Servlet** | 6.1 | 6.1 |
 
 **Java Version Note:**
 - Minimum: Java 17
-- Recommended: Java 21 (LTS) or Java 25 (latest features)
+- Recommended: Java 25 (current LTS) for new compile targets; Java 21 (previous LTS) is still fully supported. Java 26 is the newest feature release (GA 2026-03-17) but is non-LTS.
 
 ---
 
@@ -510,7 +510,9 @@ class MyControllerTest {
 | Old | New |
 |-----|-----|
 | `TestRestTemplate` | `RestTestClient` |
-| `@AutoConfigureWebTestClient` | `@AutoConfigureRestTestClient` |
+| `@AutoConfigureTestRestTemplate` (Boot 4 opt-in) | `@AutoConfigureRestTestClient` |
+
+> `@AutoConfigureWebTestClient` is for the **reactive** `WebTestClient` — it is unrelated to `TestRestTemplate` and is not what gets renamed here. Migrate `TestRestTemplate` tests by adding `@AutoConfigureRestTestClient` (and switching the type to `RestTestClient`).
 
 **Migration:**
 

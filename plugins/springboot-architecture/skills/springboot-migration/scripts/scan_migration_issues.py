@@ -559,6 +559,8 @@ class MigrationScanner:
         }
 
         for i, line in enumerate(lines, 1):
+            if line.strip().startswith('//'):
+                continue
             for old_import, new_import in old_imports.items():
                 if f'import {old_import}' in line:
                     self.result.add_issue(
@@ -583,6 +585,8 @@ class MigrationScanner:
         }
 
         for i, line in enumerate(lines, 1):
+            if line.strip().startswith('//'):
+                continue
             for old_import, new_import in tc_old_imports.items():
                 if f'import {old_import}' in line:
                     self.result.add_issue(
@@ -597,7 +601,7 @@ class MigrationScanner:
         # Check for LocalStack Service enum usage
         if 'LocalStackContainer.Service' in content:
             for i, line in enumerate(lines, 1):
-                if 'LocalStackContainer.Service' in line:
+                if 'LocalStackContainer.Service' in line and not line.strip().startswith('//'):
                     self.result.add_issue(
                         "Testcontainers 2.x - API Changes",
                         "CRITICAL",
@@ -611,7 +615,7 @@ class MigrationScanner:
         # Keep this as informational instead of treating it as invalid.
         if 'org.springframework.resilience' in content:
             for i, line in enumerate(lines, 1):
-                if 'org.springframework.resilience' in line:
+                if 'org.springframework.resilience' in line and not line.strip().startswith('//'):
                     self.result.add_issue(
                         "Spring Boot 4 - Retry/Resilience",
                         "INFO",
@@ -694,7 +698,8 @@ class MigrationScanner:
         # Check for generic Testcontainers types
         if 'PostgreSQLContainer<?>' in content or 'MySQLContainer<?>' in content:
             for i, line in enumerate(lines, 1):
-                if 'PostgreSQLContainer<?>' in line or 'MySQLContainer<?>' in line:
+                if ('PostgreSQLContainer<?>' in line or 'MySQLContainer<?>' in line) \
+                        and not line.strip().startswith('//'):
                     self.result.add_issue(
                         "Testcontainers 2.x - Generic Types",
                         "WARNING",
@@ -707,7 +712,8 @@ class MigrationScanner:
         # Check for getEndpointOverride with Service parameter
         if 'getEndpointOverride(' in content:
             for i, line in enumerate(lines, 1):
-                if 'getEndpointOverride(' in line and 'Service' in line:
+                if 'getEndpointOverride(' in line and 'Service' in line \
+                        and not line.strip().startswith('//'):
                     self.result.add_issue(
                         "Testcontainers 2.x - LocalStack API",
                         "CRITICAL",

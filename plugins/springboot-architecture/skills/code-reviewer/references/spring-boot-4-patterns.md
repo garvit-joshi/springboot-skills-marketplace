@@ -274,7 +274,7 @@ class UserControllerTest {
 
 ✅ **Spring Boot 4**
 ```java
-import org.springframework.boot.test.autoconfigure.webmvc.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 
 @WebMvcTest(UserController.class)
 class UserControllerTest {
@@ -749,7 +749,7 @@ Source: [Spring Boot 4.0 Migration Guide](https://github.com/spring-projects/spr
 
 ❌ `@MockBean` → Should be `@MockitoBean`
 ❌ `@SpyBean` → Should be `@MockitoSpyBean`
-❌ `import org.springframework.boot.test.autoconfigure.web.servlet.*` → Should be `.webmvc.*`
+❌ `import org.springframework.boot.test.autoconfigure.web.servlet.*` → Should be `org.springframework.boot.webmvc.test.autoconfigure.*`
 
 ### 4. Missing AOP for Retry/Resilience
 

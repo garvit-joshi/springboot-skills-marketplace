@@ -1,6 +1,6 @@
 # Testcontainers 2.x Migration Guide
 
-> **Official Documentation**: [Testcontainers 2.0 Migration Guide](https://java.testcontainers.org/migrations/testcontainers-2/)
+> **Official sources**: [Testcontainers 2.0.0 release notes](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0) and the [OpenRewrite Testcontainers 2.x migration recipe](https://docs.openrewrite.org/recipes/java/testing/testcontainers/testcontainers2migration). The Testcontainers project does not publish a separate "Migration Guide" page; the release notes and recipe enumerate every artifact rename, package relocation, and removed API.
 
 ## Table of Contents
 
@@ -79,9 +79,10 @@
 | `kafka` | `testcontainers-kafka` |
 | `rabbitmq` | `testcontainers-rabbitmq` |
 | `elasticsearch` | `testcontainers-elasticsearch` |
-| `redis` | `testcontainers-redis` |
 
-**Pattern:** Add `testcontainers-` prefix to all module artifacts
+**Pattern:** Add `testcontainers-` prefix to all module artifacts.
+
+> Note: there is no official `org.testcontainers:redis` (or `org.testcontainers:testcontainers-redis`) module in the Testcontainers Java project — the `modules/` directory in `testcontainers/testcontainers-java` at 2.0.0 has no `redis` entry. Most projects use the third-party `com.redis:testcontainers-redis` artifact, or a plain `GenericContainer(DockerImageName.parse("redis:7"))`.
 
 ---
 
@@ -213,9 +214,9 @@ S3Client s3Client(LocalStackContainer localStackContainer) {
 ```
 
 **Changes:**
-- `getEndpointOverride(Service)` → `getEndpoint()`
-- No service parameter needed
-- Services auto-detected by LocalStack
+- `getEndpointOverride(Service)` → `getEndpoint()` (returns the single LocalStack edge endpoint; all services share it)
+- The endpoint accessor no longer takes a service parameter
+- `withServices(String...)` still declares which services to start — internally it sets the `SERVICES` environment variable on the container; LocalStack does not auto-detect what your test uses. Omit `withServices(...)` to let LocalStack start with its default service set instead.
 
 ### 2. Generic Type Removal
 
@@ -664,7 +665,8 @@ LocalStackContainer localstack() {
 
 ## References
 
-- [Testcontainers 2.0 Migration Guide](https://java.testcontainers.org/migrations/testcontainers-2/)
+- [Testcontainers 2.0.0 release notes](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0)
+- [OpenRewrite Testcontainers 2.x migration recipe](https://docs.openrewrite.org/recipes/java/testing/testcontainers/testcontainers2migration)
 - [Testcontainers Documentation](https://java.testcontainers.org/)
 - [LocalStack Documentation](https://docs.localstack.cloud/)
 - [Spring Boot Testcontainers Support](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing.testcontainers)

@@ -2,6 +2,7 @@ package {{PACKAGE}}.{{MODULE}}.domain.vo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import jakarta.persistence.Embeddable;
 
 /**
  * Value Object template - immutable, self-validating, type-safe.
@@ -12,7 +13,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *   {{NAME}} - VO name (e.g., ProductSKU, Email, Price)
  *   {{TYPE}} - wrapped type (e.g., String, Long, BigDecimal)
  *   {{FIELD}} - field name (e.g., code, value, amount)
+ *
+ * @Embeddable lets this record be used in JPA entities via @Embedded /
+ * @EmbeddedId — required by Jakarta Persistence 3.2 §2.7 even though records
+ * are otherwise the standard embeddable shape on Hibernate 6.2+. Drop the
+ * annotation (and the import) if this VO will never be stored by JPA.
  */
+@Embeddable
 public record {{NAME}}(@JsonValue {{TYPE}} {{FIELD}}) {
 
     // DELEGATING mode pairs with @JsonValue on the single component: Jackson

@@ -127,16 +127,26 @@ public class Order {
 - Collection is always small (<20 items)
 - Need to modify collection from parent
 
-## @ManyToMany → Join Entity (Required)
+## @ManyToMany → Prefer an explicit Join Entity
 
-**WRONG:**
+Jakarta Persistence 3.2 defines `@ManyToMany` as a first-class relationship with a `LAZY` default, so this is a design recommendation, not a spec restriction. The plain `@ManyToMany` works — the trade-off is that the join table becomes invisible to your domain.
+
+**Avoid plain `@ManyToMany` when:**
+- The relationship has any attribute of its own (enrolment date, status, grade, weight, role on the project, …) — these cannot live on `@ManyToMany`'s implicit join table
+- You need lifecycle events on the link itself (audit, soft-delete)
+- You need to query the relationship directly (e.g. `find enrollments completed last quarter`)
+
+**Plain `@ManyToMany` is acceptable when:** the link genuinely carries no data and you never need to query it as an entity — e.g. tagging.
+
 ```java
+// Acceptable: pure tagging, no link attributes ever needed
 @ManyToMany
-@JoinTable(name = "student_course", ...)
-private Set<Course> courses;
+@JoinTable(name = "post_tags", ...)
+private Set<Tag> tags;
 ```
 
-**RIGHT - Use Join Entity:**
+**Prefer an explicit join entity:**
+```java
 ```java
 @Entity
 @Table(name = "enrollments")
@@ -261,7 +271,7 @@ Optional<Product> findByIdWithCategory(@Param("id") Long id);
 1. **Prefer @ManyToOne** - Query from many side
 2. **Always use LAZY** - Use JOIN FETCH when needed
 3. **Avoid bidirectional** - Query instead of mapping
-4. **Never @ManyToMany** - Create join entity
+4. **Prefer a join entity over plain @ManyToMany** when the relationship has attributes or needs to be queried (plain `@ManyToMany` itself is part of the JPA spec and fine for pure tagging-style links)
 5. **Use IDs for loose coupling** - Between modules
 6. **Helper methods for bidirectional** - Maintain both sides
 7. **CASCADE carefully** - Understand propagation

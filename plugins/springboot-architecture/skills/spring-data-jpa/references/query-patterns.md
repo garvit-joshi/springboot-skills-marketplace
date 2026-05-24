@@ -38,7 +38,7 @@ List<OrderEntity> findUserOrders(@Param("userId") Long userId,
 
 **Key points:**
 - Use text blocks `"""` for readability
-- Always use `@Param` for parameter binding
+- Prefer `@Param` for named parameter binding. When the code is compiled with `-parameters` (Spring Boot's default since 3.2 with the spring-boot-maven-plugin / spring-boot-gradle-plugin), Spring Data can match `:name` placeholders to method parameter names without `@Param` — keep using `@Param` if you can't guarantee that flag (older builds, custom toolchains, obfuscation/shading).
 - Use `LEFT JOIN FETCH` to prevent N+1
 - Use `DISTINCT` when fetching collections
 

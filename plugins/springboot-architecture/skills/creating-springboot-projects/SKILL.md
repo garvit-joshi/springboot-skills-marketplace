@@ -13,7 +13,7 @@ Use this skill to create new Spring Boot 4 projects or define their structure be
 
 - Never jump straight to implementation before assessing project complexity.
 - Default to the simplest architecture that fits the domain.
-- Treat Spring Boot 4 as the target. Default new projects to Java 25, but remember Boot 4's official baseline is Java 17 — accept Java 21 (LTS) or Java 17 when the user asks for them.
+- Treat Spring Boot 4 as the target. Default new projects to Java 25 (current LTS). Boot 4's official baseline is Java 17 — accept Java 21 (previous LTS) or Java 17 when the user asks for them. Java 26 is the newest feature release (GA 2026-03-17) but is non-LTS; only pick it if the project tracks non-LTS Java.
 - Read the reference files before choosing a higher-complexity architecture or optional framework feature.
 - Reuse the templates in `assets/` instead of rewriting the same scaffolding from scratch.
 
@@ -51,7 +51,7 @@ Use Spring Initializr and capture the baseline:
 - Project: Maven or Gradle
 - Language: Java
 - Spring Boot: 4.0.x
-- Java: 25 (recommended). Boot 4's minimum is Java 17; use 21 for an LTS-only stack, or 17 for stricter compatibility.
+- Java: 25 (recommended — current LTS). Boot 4's minimum is Java 17; use 21 for the previous LTS, or 17 for stricter compatibility. Java 26 (GA 2026-03-17) is the latest feature release but is non-LTS.
 
 Baseline dependencies for most projects:
 
