@@ -265,12 +265,26 @@ class MigrationScanner:
         )
         lines = content.split('\n')
 
+        # Build a code-only view of the content with `//` line comments stripped
+        # (same rule the per-line loop uses below: `//` at start-of-line or
+        # preceded by whitespace, leaving `://` inside URL string literals
+        # alone). Commented portions are blanked rather than removed so line
+        # numbers in `lines` still match. All content-level substring/regex
+        # checks below run against `code_content` so a commented-out dep like
+        #   // implementation("org.springframework.boot:spring-boot-starter-restclient")
+        # cannot satisfy a presence flag.
+        def _strip_line_comment(line: str) -> str:
+            comment_match = re.search(r'(^//|\s//)', line)
+            return line[:comment_match.end(0) - 2] if comment_match else line
+
+        code_content = '\n'.join(_strip_line_comment(line) for line in lines)
+
         # Spring Boot plugin version — works for both DSLs:
         #   id 'org.springframework.boot' version '4.0.0'
         #   id("org.springframework.boot") version "4.0.0"
         sb_plugin = re.search(
             r"""id\s*[\(\s]+\s*['"]org\.springframework\.boot['"]\s*\)?\s*version\s*['"]([\d.]+(?:[-.\w]*)?)['"]""",
-            content,
+            code_content,
         )
         if sb_plugin:
             self.result.spring_boot_version = sb_plugin.group(1)
@@ -285,14 +299,14 @@ class MigrationScanner:
             (r"""testcontainersVersion['"\]]*\s*[=,]\s*['"]([\d.]+(?:[-.\w]*)?)['"]""",
              "testcontainers_version", False),
         ]:
-            m = re.search(prop_pattern, content)
+            m = re.search(prop_pattern, code_content)
             if m:
                 setattr(self.result, target_attr, m.group(1))
                 if marks_modulith:
                     self.modulith_in_use = True
 
         # Spring Modulith presence by groupId/artifactId
-        if 'org.springframework.modulith' in content or 'spring-modulith' in content:
+        if 'org.springframework.modulith' in code_content or 'spring-modulith' in code_content:
             self.modulith_in_use = True
 
         print(f"   Spring Boot: {self.result.spring_boot_version}")
@@ -315,11 +329,7 @@ class MigrationScanner:
         for i, line in enumerate(lines, 1):
             # Drop trailing line comments so `impl 'group:art' // note` still
             # parses the dep, while fully-commented lines fall through below.
-            # Only treat `//` as a comment when at the start of the line or
-            # preceded by whitespace, so `://` inside URL string literals
-            # (e.g. `maven { url 'https://repo' }`) isn't truncated.
-            comment_match = re.search(r'(^//|\s//)', line)
-            code = line[:comment_match.end(0) - 2] if comment_match else line
+            code = _strip_line_comment(line)
             stripped = code.strip()
             if not stripped or stripped.startswith('#'):
                 continue
@@ -373,10 +383,12 @@ class MigrationScanner:
                     )
                     spring_retry_reported = True
 
-        # Track modular HTTP client starters
-        if 'spring-boot-starter-restclient' in content:
+        # Track modular HTTP client starters (use code_content so a commented
+        # `// implementation("...spring-boot-starter-restclient")` cannot flip
+        # the presence flag and suppress the missing-starter warning).
+        if 'spring-boot-starter-restclient' in code_content:
             self.has_restclient_starter = True
-        if 'spring-boot-starter-webclient' in content:
+        if 'spring-boot-starter-webclient' in code_content:
             self.has_webclient_starter = True
 
     def _scan_java_files(self):
