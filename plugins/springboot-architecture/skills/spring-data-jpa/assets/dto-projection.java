@@ -49,6 +49,21 @@ public record {{NAME}}Details(
 }
 
 /**
+ * Flat row used by {@code findFlatDetailsById}. Mirrors the JPQL constructor
+ * expression below: scalar fields only, no nested types. The service layer
+ * composes it into {{NAME}}Details (see sketch under the repository method).
+ */
+public record {{NAME}}FlatRow(
+    Long id,
+    String code,
+    String name,
+    Long categoryId,
+    String categoryName,
+    BigDecimal price,
+    int stock
+) {}
+
+/**
  * Repository using Record projections.
  */
 public interface {{NAME}}Repository extends JpaRepository<{{NAME}}Entity, Long> {
@@ -339,6 +354,20 @@ public record ProductDetails(
 ) {
     public record CategoryInfo(Long id, String name, String slug) {}
 }
+
+// Flat row used by findFlatDetailsBySku — scalar fields only, assembled
+// into ProductDetails in the service layer.
+public record ProductFlatRow(
+    Long id,
+    String sku,
+    String name,
+    String description,
+    BigDecimal price,
+    int stock,
+    Long categoryId,
+    String categoryName,
+    String categorySlug
+) {}
 
 public interface ProductStatsView {
     String getCategory();
