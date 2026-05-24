@@ -569,9 +569,9 @@ public class User {
 
 ## Scoped Values API
 
-**Status:** Preview (Java 25)
+**Status:** Standard (JEP 506, finalized in Java 25)
 
-Thread-local-like values optimized for virtual threads and structured concurrency.
+Thread-local-like values optimized for virtual threads and structured concurrency. Finalized in JDK 25 with one behavior change: `ScopedValue.orElse` no longer accepts null as its argument.
 
 ```java
 public class RequestContext {
@@ -692,11 +692,14 @@ byte[] hash = kd.deriveKey(password, params).getEncoded();
 8. **Switch Pattern Matching** - When working with type hierarchies
 9. **Primitive Patterns** - When pattern matching with primitives (preview)
 
+### Medium Priority (Standard but situational)
+
+10. **Scoped Values** - **Standard in JDK 25 (JEP 506).** Adopt for request-scoped context propagation in virtual-thread-heavy applications instead of `ThreadLocal`.
+
 ### Low Priority (Evaluate Carefully)
 
-10. **Module Import Declarations** - Preview, only for module-heavy codebases
-11. **Flexible Constructor Bodies** - Preview, only when needed for validation
-12. **Scoped Values** - Preview, only for virtual thread-heavy applications
+11. **Module Import Declarations** - Preview, only for module-heavy codebases
+12. **Flexible Constructor Bodies** - Preview, only when needed for validation
 13. **Stable Values** - Preview, can use existing lazy initialization patterns
 14. **Key Derivation Function API** - Preview, only for new security code
 15. **FFM API** - Only if calling native libraries
@@ -721,7 +724,7 @@ When reviewing Java code, check for:
 - [ ] Pattern matching with boxed primitives → Consider primitive patterns (preview)
 - [ ] Many imports from single module → Consider module import declarations (preview)
 - [ ] Complex constructor validation → Consider flexible constructor bodies (preview)
-- [ ] ThreadLocal for request context → Consider Scoped Values (preview)
+- [ ] ThreadLocal for request context → Use Scoped Values (standard in JDK 25, JEP 506)
 - [ ] Manual lazy initialization → Consider Stable Values (preview)
 - [ ] Custom KDF implementations → Consider Key Derivation Function API (preview)
 

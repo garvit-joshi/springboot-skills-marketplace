@@ -415,26 +415,37 @@ public String fetchContent(@RequestParam String url) {
     return restClient.get().uri(url).retrieve().body(String.class);
 }
 
+// Whitelist approach (preferred — fail closed):
+private static final Set<String> ALLOWED_HOSTS =
+    Set.of("api.example.com", "cdn.example.com");
+
 private boolean isAllowedUrl(String url) {
     try {
         URI uri = new URI(url);
         String host = uri.getHost();
-
-        // Whitelist approach
-        return ALLOWED_HOSTS.contains(host);
-
-        // Or blacklist localhost, private IPs
-        if (host.equals("localhost") ||
-            host.equals("127.0.0.1") ||
-            host.startsWith("192.168.") ||
-            host.startsWith("10.") ||
-            host.startsWith("172.16.")) {
+        if (host == null) {
             return false;
         }
-        return true;
+        return ALLOWED_HOSTS.contains(host);
     } catch (URISyntaxException e) {
         return false;
     }
+}
+```
+
+If you genuinely cannot enumerate allowed hosts (e.g., open-fetcher service), fall back to blocking localhost and RFC 1918 private ranges instead — but be aware blacklists miss IPv6 link-local, IPv4-mapped IPv6, hostname → private-IP DNS rebinding, and cloud metadata endpoints like `169.254.169.254`:
+
+```java
+private boolean isPublicHost(String host) {
+    if (host == null) {
+        return false;
+    }
+    return !(host.equals("localhost") ||
+             host.equals("127.0.0.1") ||
+             host.startsWith("192.168.") ||
+             host.startsWith("10.") ||
+             host.startsWith("172.16.") ||
+             host.equals("169.254.169.254")); // cloud metadata
 }
 ```
 

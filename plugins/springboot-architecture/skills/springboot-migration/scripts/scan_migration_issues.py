@@ -67,8 +67,27 @@ class MigrationScanner:
         gradle_groovy = self.project_path / "build.gradle"
         gradle_kotlin = self.project_path / "build.gradle.kts"
 
+        # Multi-module Maven: the root pom usually only declares <modules> and
+        # the actual Spring Boot version sits in submodule poms. Discover and
+        # scan every pom.xml in the tree (root first so its outputs print
+        # first), skipping `target/` and `.git/` to avoid noise. The first
+        # match wins for version detection because `_scan_pom` only assigns
+        # when the field is still default.
         if pom_path.exists():
-            self._scan_pom(pom_path)
+            poms = [pom_path]
+            for child in sorted(self.project_path.rglob("pom.xml")):
+                if child == pom_path:
+                    continue
+                parts = set(child.relative_to(self.project_path).parts)
+                if parts & {"target", ".git", "node_modules", "build"}:
+                    continue
+                poms.append(child)
+            for pom in poms:
+                self._scan_pom(pom)
+            # Single summary after walking every pom — first detection wins.
+            print(f"   Spring Boot: {self.result.spring_boot_version}")
+            print(f"   Spring Modulith: {self.result.spring_modulith_version}")
+            print(f"   Testcontainers: {self.result.testcontainers_version}")
         if gradle_groovy.exists():
             self._scan_gradle(gradle_groovy)
         if gradle_kotlin.exists():
@@ -120,7 +139,11 @@ class MigrationScanner:
 
     def _scan_pom(self, pom_path: Path):
         """Scan pom.xml for dependency issues"""
-        print("\n📦 Scanning pom.xml...")
+        try:
+            rel = pom_path.relative_to(self.project_path)
+        except ValueError:
+            rel = pom_path
+        print(f"\n📦 Scanning {rel}...")
 
         with open(pom_path, 'r') as f:
             content = f.read()
@@ -141,22 +164,61 @@ class MigrationScanner:
         # (e.g. 4.0.0-RC1, 2.0.0-SNAPSHOT, 2.0.0-M3) instead of truncating to
         # the leading digits.
         version_value = r'([\d.]+(?:[-.\w]*)?)'
+
+        # Spring Boot version detection — try three idiomatic styles in order:
+        #   (1) <spring-boot.version>X</spring-boot.version> property style
+        #   (2) <parent>...<artifactId>spring-boot-starter-parent</artifactId>
+        #       <version>X</version></parent>     (Spring Initializr default)
+        #   (3) <dependencyManagement> BOM import of spring-boot-dependencies
         spring_boot_match = re.search(r'<spring-boot\.version>' + version_value, content)
-        if spring_boot_match:
+        if not spring_boot_match:
+            # <parent> style: capture the version that sits inside the same
+            # <parent>...</parent> block as spring-boot-starter-parent. Block
+            # is non-greedy and anchored on both tags so the regex doesn't
+            # roam across unrelated <parent> declarations (e.g. a multi-module
+            # build with its own parent above the spring-boot one).
+            spring_boot_match = re.search(
+                r'<parent>[\s\S]*?<artifactId>\s*spring-boot-starter-parent\s*</artifactId>'
+                r'[\s\S]*?<version>\s*' + version_value + r'\s*</version>'
+                r'[\s\S]*?</parent>',
+                content,
+            )
+        if not spring_boot_match:
+            # <dependencyManagement> BOM-import style.
+            spring_boot_match = re.search(
+                r'<artifactId>\s*spring-boot-dependencies\s*</artifactId>'
+                r'[\s\S]{0,400}?<version>\s*' + version_value + r'\s*</version>',
+                content,
+            )
+        # In multi-module scans the root pom may not declare a version while
+        # submodule poms do. First match wins — don't overwrite a value found
+        # in an earlier (e.g. root or sibling) pom.
+        if spring_boot_match and self.result.spring_boot_version == "Unknown":
             self.result.spring_boot_version = spring_boot_match.group(1)
 
         spring_modulith_match = re.search(r'<spring-modulith\.version>' + version_value, content)
+        if not spring_modulith_match:
+            # spring-modulith-bom import style.
+            spring_modulith_match = re.search(
+                r'<artifactId>\s*spring-modulith-bom\s*</artifactId>'
+                r'[\s\S]{0,400}?<version>\s*' + version_value + r'\s*</version>',
+                content,
+            )
         if spring_modulith_match:
-            self.result.spring_modulith_version = spring_modulith_match.group(1)
+            if self.result.spring_modulith_version == "Unknown":
+                self.result.spring_modulith_version = spring_modulith_match.group(1)
             self.modulith_in_use = True
 
         testcontainers_match = re.search(r'<testcontainers\.version>' + version_value, content)
-        if testcontainers_match:
+        if not testcontainers_match:
+            # testcontainers-bom import style.
+            testcontainers_match = re.search(
+                r'<artifactId>\s*testcontainers-bom\s*</artifactId>'
+                r'[\s\S]{0,400}?<version>\s*' + version_value + r'\s*</version>',
+                content,
+            )
+        if testcontainers_match and self.result.testcontainers_version == "Unknown":
             self.result.testcontainers_version = testcontainers_match.group(1)
-
-        print(f"   Spring Boot: {self.result.spring_boot_version}")
-        print(f"   Spring Modulith: {self.result.spring_modulith_version}")
-        print(f"   Testcontainers: {self.result.testcontainers_version}")
 
         if re.search(r'<artifactId>spring-modulith', content) or re.search(
             r'<groupId>org\.springframework\.modulith</groupId>', content

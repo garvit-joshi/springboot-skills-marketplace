@@ -1,3 +1,12 @@
+// ============================================================
+// BUNDLE TEMPLATE — split into separate .java files when applying.
+// Java only allows one public top-level type per source file, so the
+// public records, interfaces, and repository declarations below must
+// each live in their own .java file with a matching filename. The
+// {{PACKAGE}}, {{MODULE}}, {{NAME}}, and {{TABLE_NAME}} placeholders
+// resolve identically across all of them.
+// ============================================================
+
 package {{PACKAGE}}.{{MODULE}};
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -312,11 +321,14 @@ public interface {{NAME}}NativeRepository extends JpaRepository<{{NAME}}Entity, 
    - Test with realistic data volumes
 
 5. HYPERSISTENCE UTILS (OPTIONAL):
-   Add to pom.xml to avoid fully-qualified class names:
+   Add to pom.xml to avoid fully-qualified class names. Spring Boot 4.0.x
+   ships Hibernate 7.2.x, so use the -hibernate-71 module (the -hibernate-63
+   module previously listed here targets Hibernate 6.3 and will not work on
+   Boot 4):
    <dependency>
        <groupId>io.hypersistence</groupId>
-       <artifactId>hypersistence-utils-hibernate-63</artifactId>
-       <version>3.7.0</version>
+       <artifactId>hypersistence-utils-hibernate-71</artifactId>
+       <version>3.15.2</version>
    </dependency>
 
    Register in HibernateConfig:

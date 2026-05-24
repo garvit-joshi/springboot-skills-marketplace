@@ -742,8 +742,8 @@ Source: [Spring Boot 4.0 Migration Guide](https://github.com/spring-projects/spr
 
 ### 2. Old Jackson Group IDs
 
-❌ `com.fasterxml.jackson.*` → Expected to change to `tools.jackson.*` (verify in your project)
-⚠️ Note: Jackson 3 packaging details may vary - check Spring Boot 4 BOM for actual group IDs
+❌ `com.fasterxml.jackson.core:jackson-core` / `jackson-databind` → moved to `tools.jackson.core:jackson-core` / `jackson-databind` in Jackson 3.
+✅ `jackson-annotations` intentionally stays on the legacy `com.fasterxml.jackson.core` group ID so projects can mix Jackson 2 and Jackson 3 during ecosystem migration. Source: [Introducing Jackson 3 support in Spring (2025-10-07)](https://spring.io/blog/2025/10/07/introducing-jackson-3-support-in-spring/).
 
 ### 3. Old Test Annotations
 

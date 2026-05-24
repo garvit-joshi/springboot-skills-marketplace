@@ -208,7 +208,10 @@ spring:
 logging:
   level:
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # Hibernate 6+ logger for bound parameter values.
+    # (Pre-6 used org.hibernate.type.descriptor.sql.BasicBinder — that name is
+    # silently ignored on Hibernate 6/7, so logs go quiet without warning.)
+    org.hibernate.orm.jdbc.bind: TRACE
 ```
 
 ## Performance Checklist

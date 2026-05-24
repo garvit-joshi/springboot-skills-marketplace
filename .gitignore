@@ -24,6 +24,8 @@ package-lock.json
 dist/
 build/
 target/
+__pycache__/
+*.py[cod]
 
 # Environment files
 .env

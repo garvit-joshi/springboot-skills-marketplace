@@ -1,3 +1,12 @@
+// ============================================================
+// BUNDLE TEMPLATE — split into separate .java files when applying.
+// Java only allows one public top-level type per source file, so the
+// public records, classes, and the query service below must each live
+// in their own .java file with a matching filename. The {{PACKAGE}},
+// {{MODULE}}, {{NAME}}, and {{TABLE_NAME}} placeholders resolve
+// identically across all of them.
+// ============================================================
+
 package {{PACKAGE}}.{{MODULE}}.domain;
 
 import org.springframework.jdbc.core.JdbcTemplate;

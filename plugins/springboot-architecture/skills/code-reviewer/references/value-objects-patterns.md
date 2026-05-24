@@ -224,8 +224,14 @@ if (total.isPositive()) { ... }
 ### 5. Money Value Object
 
 ```java
+// Money has two components, so it must NOT use @JsonValue on a single field —
+// @JsonValue is single-value serialization and would silently drop the other
+// component. Jackson's record auto-detection serializes this as an object:
+//   { "amount": 19.99, "currency": "USD" }
+// If you need a different wire shape (e.g., "19.99 USD"), pair an explicit
+// @JsonSerialize/@JsonDeserialize like the MoneySerializer example below.
 public record Money(
-    @JsonValue BigDecimal amount,
+    BigDecimal amount,
     Currency currency) {
 
     public static final Money ZERO_USD = Money.usd(BigDecimal.ZERO);
@@ -528,6 +534,13 @@ public class Customer {
 ```
 
 ### Using EmbeddedId
+
+> **Compatibility note:** Records as `@Embeddable` / `@EmbeddedId` require Hibernate 6.2+. Spring Boot 4 ships Hibernate 7.x, so this works out of the box. Two caveats to know before adopting widely:
+>
+> - **QueryDSL APT** does not accept `@Embeddable` records and will fail annotation processing — see [querydsl#3695](https://github.com/querydsl/querydsl/issues/3695). Pin a workaround or use `Q*` classes generated from non-record stand-ins if you use QueryDSL.
+> - **MapStruct** is fine for records as targets/sources, but its default constructor-based mapping for nested embeddable records sometimes requires `@Mapping(target = "...", source = "...")` overrides — verify generated code before relying on it.
+>
+> If your toolchain doesn't support record embeddables yet, fall back to a plain class with `private final` fields + canonical constructor.
 
 ```java
 @Embeddable

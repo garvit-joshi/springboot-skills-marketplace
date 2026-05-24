@@ -230,18 +230,20 @@ private Customer customer;
 
 ## Fetch Strategies
 
-**Always use LAZY:**
+**Always set LAZY explicitly on @ManyToOne / @OneToOne:**
 ```java
-@ManyToOne(fetch = FetchType.LAZY)  // Default, explicit
+@ManyToOne(fetch = FetchType.LAZY)  // ⚠️ JPA default for @ManyToOne is EAGER — always override
 @JoinColumn(name = "category_id")
 private Category category;
 ```
 
-**Never use EAGER:**
+**Never use EAGER (and remember it is the default unless you override it):**
 ```java
-@ManyToOne(fetch = FetchType.EAGER)  // ❌ Avoid!
+@ManyToOne(fetch = FetchType.EAGER)  // ❌ Avoid! Also the silent default if you omit fetch=
 private Brand brand;
 ```
+
+> Per the Jakarta Persistence spec: `@ManyToOne` and `@OneToOne` default to EAGER, while `@OneToMany` and `@ManyToMany` default to LAZY. Most teams want LAZY everywhere — to-one associations must override the default explicitly.
 
 **Use JOIN FETCH in queries instead:**
 ```java

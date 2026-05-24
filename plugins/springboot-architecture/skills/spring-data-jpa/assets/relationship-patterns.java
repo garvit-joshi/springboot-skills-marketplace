@@ -1,3 +1,14 @@
+// ============================================================
+// BUNDLE TEMPLATE — split into separate .java files when applying.
+// Java only allows one public top-level type per source file, so the
+// public @Entity classes and repository declarations below must each
+// live in their own .java file with a matching filename. The
+// {{PACKAGE}} and {{MODULE}} placeholders resolve identically across
+// all of them. Each entity below illustrates a different relationship
+// pattern — pick the ones you need; you are not meant to apply all
+// of them in one project.
+// ============================================================
+
 package {{PACKAGE}}.{{MODULE}}.domain;
 
 import jakarta.persistence.*;
@@ -37,7 +48,8 @@ import java.util.Set;
  * - Examples: OrderItem -> Order, Product -> Category
  *
  * Best practices:
- * - ALWAYS use FetchType.LAZY (it's the default)
+ * - ALWAYS set fetch = FetchType.LAZY explicitly — the JPA default for
+ *   @ManyToOne is EAGER, which causes hidden N+1 queries
  * - Use optional = false if relationship is required
  * - Specify @JoinColumn name explicitly
  * - Consider using ID instead of entity reference
@@ -479,19 +491,26 @@ public class OrderCascadeExample {
 /**
  * FetchType - when to load related entities.
  *
- * LAZY (default for @ManyToOne, @OneToOne):
- * - Load only when accessed
- * - Better performance
- * - May cause LazyInitializationException
+ * Per the Jakarta Persistence specification:
+ *   @ManyToOne, @OneToOne  -> default EAGER (must override to LAZY)
+ *   @OneToMany, @ManyToMany -> default LAZY
  *
- * EAGER (default for @OneToMany, @ManyToMany):
+ * EAGER:
  * - Load immediately with parent
- * - Causes N+1 queries
- * - Avoid unless collection is tiny
+ * - Easy to forget; can fan out into N+1 queries
+ * - Cannot be downgraded to LAZY at query time
+ *
+ * LAZY:
+ * - Load only when first accessed
+ * - May throw LazyInitializationException if accessed outside a session
+ * - Pair with JOIN FETCH / @EntityGraph for paths that genuinely need the
+ *   association
  *
  * BEST PRACTICE:
- * - Always use LAZY
- * - Use JOIN FETCH in queries when needed
+ * - Explicitly set FetchType.LAZY on every @ManyToOne / @OneToOne (the
+ *   defaults are EAGER and almost always wrong for production code).
+ * - Leave @OneToMany / @ManyToMany at the LAZY default; never set them EAGER.
+ * - Use JOIN FETCH or @EntityGraph in queries when you need the association.
  */
 @Entity
 @Table(name = "fetch_example")

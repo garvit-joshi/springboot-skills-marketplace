@@ -25,10 +25,14 @@ public class Order {
     @Id
     private Long id;
 
-    @ManyToOne  // Lazy by default
+    // @ManyToOne defaults to EAGER in JPA — left as default here, which is
+    // already loading 'user' with every query (one of the two N+1 sources).
+    @ManyToOne
     private User user;
 
-    @OneToMany(mappedBy = "order")  // Lazy by default
+    // @OneToMany defaults to LAZY — accessing it inside the loop below
+    // triggers a separate query per Order (the second N+1 source).
+    @OneToMany(mappedBy = "order")
     private List<OrderItem> items;
 }
 
@@ -120,24 +124,31 @@ spring:
 
 ### Spring Cache Abstraction
 
-✅ **Enable caching**
+✅ **Enable caching** — the `Caffeine` builder must be wired into `CaffeineCacheManager` via `setCaffeine(...)`. A free-standing `@Bean Caffeine<Object, Object>` next to a hand-built `CaffeineCacheManager` is a common mistake: the cache runs with Caffeine's defaults (unbounded, no TTL) and the builder bean is dead code.
+
 ```java
 @Configuration
 @EnableCaching
 public class CacheConfig {
+
     @Bean
-    public CacheManager cacheManager() {
-        return new CaffeineCacheManager("users", "products");
+    public CacheManager cacheManager(Caffeine<Object, Object> caffeine) {
+        CaffeineCacheManager manager =
+            new CaffeineCacheManager("users", "products");
+        manager.setCaffeine(caffeine); // <-- the wiring step
+        return manager;
     }
 
     @Bean
     public Caffeine<Object, Object> caffeineConfig() {
         return Caffeine.newBuilder()
             .maximumSize(1000)
-            .expireAfterWrite(10, TimeUnit.MINUTES);
+            .expireAfterWrite(Duration.ofMinutes(10));
     }
 }
 ```
+
+> **Alternative:** drop the manual `CacheManager` bean and let Spring Boot auto-configure it. With `spring-boot-starter-cache` + Caffeine on the classpath, set `spring.cache.type=caffeine` and `spring.cache.cache-names=users,products`, then expose only the `Caffeine` bean — Boot wires it for you.
 
 ✅ **Cache usage**
 ```java
@@ -181,10 +192,12 @@ public User findById(Long id) {
 @Bean
 public Caffeine<Object, Object> caffeineConfig() {
     return Caffeine.newBuilder()
-        .expireAfterWrite(10, TimeUnit.MINUTES)  // Absolute expiration
-        .expireAfterAccess(5, TimeUnit.MINUTES); // Sliding expiration
+        .expireAfterWrite(Duration.ofMinutes(10))   // Absolute expiration
+        .expireAfterAccess(Duration.ofMinutes(5));  // Sliding expiration
 }
 ```
+
+> **How the two clocks combine:** Caffeine evaluates both independently. An entry is evicted as soon as **either** deadline passes (the earlier of `write + 10m` and `lastAccess + 5m`), not the union. Setting both does not "extend" the TTL — it tightens it. Use one if you want one behavior, both only if you want "expire after 10m even if hot, sooner if idle." See: https://github.com/ben-manes/caffeine/wiki/Eviction#time-based
 
 ❌ **Caching large objects**
 ```java

@@ -125,7 +125,7 @@ public List<ProductWithStatsVM> findTopSelling(int limit) {
 
 ```java
 public Page<ProductVM> findPage(int page, int size) {
-    int offset = page * size;
+    Pageable pageable = PageRequest.of(page, size);
 
     Long total = jdbcTemplate.queryForObject(
         "SELECT COUNT(*) FROM products WHERE status = 'ACTIVE'",
@@ -140,13 +140,15 @@ public Page<ProductVM> findPage(int page, int size) {
         LIMIT ? OFFSET ?
         """,
         ps -> {
-            ps.setInt(1, size);
-            ps.setInt(2, offset);
+            ps.setInt(1, pageable.getPageSize());
+            ps.setInt(2, (int) pageable.getOffset());
         },
         (rs, rowNum) -> new ProductVM(/* ... */)
     );
 
-    return new Page<>(content, page, size, total);
+    // org.springframework.data.domain.Page is an interface — instantiate
+    // PageImpl (its standard implementation) instead.
+    return new PageImpl<>(content, pageable, total != null ? total : 0L);
 }
 ```
 
