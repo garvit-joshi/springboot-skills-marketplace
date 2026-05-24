@@ -319,6 +319,33 @@ class MigrationScanner:
             r"""['"]([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+)(?::([\w.+\-]+))?['"]"""
         )
 
+        # Map-style notation, same line:
+        #   Groovy: implementation group: 'g', name: 'a' [, version: 'v']
+        #   Kotlin: implementation(group = "g", name = "a" [, version = "v"])
+        # Keys may appear in any order on the line. We only need group + name
+        # to identify the artifact; version is ignored. Multi-line map-style
+        # is uncommon and intentionally not handled — a separate pass over
+        # logical statements would be required.
+        map_kv_re = re.compile(
+            r"""\b(group|name)\s*[:=]\s*['"]([A-Za-z0-9_.\-]+)['"]"""
+        )
+
+        def _gradle_gav_pairs(code_line):
+            """Yield (group_id, artifact_id) for every dependency on this line.
+
+            Covers both the string-form GAV coordinate and the map-style
+            notation. For map-style, only the first occurrence of each key on
+            the line is taken — pairing multiple group/name kv-pairs on the
+            same line is ambiguous and not idiomatic Gradle.
+            """
+            for m in dep_re.finditer(code_line):
+                yield m.group(1), m.group(2)
+            kv = {}
+            for m in map_kv_re.finditer(code_line):
+                kv.setdefault(m.group(1), m.group(2))
+            if 'group' in kv and 'name' in kv:
+                yield kv['group'], kv['name']
+
         old_starters = {
             'spring-boot-starter-web': 'spring-boot-starter-webmvc',
             'spring-boot-starter-aop': 'spring-boot-starter-aspectj',
@@ -333,9 +360,7 @@ class MigrationScanner:
             stripped = code.strip()
             if not stripped or stripped.startswith('#'):
                 continue
-            for m in dep_re.finditer(code):
-                group_id, artifact_id = m.group(1), m.group(2)
-
+            for group_id, artifact_id in _gradle_gav_pairs(code):
                 if group_id == 'org.springframework.boot' and artifact_id in old_starters:
                     self.result.add_issue(
                         "Spring Boot 4 - Dependencies",
