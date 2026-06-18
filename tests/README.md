@@ -362,6 +362,5 @@ If you run these tests, please contribute results:
 
 ## References
 
-- **TDD for Skills:** See `skills/writing-skills/SKILL.md`
 - **Original Approach:** Based on [antonbabenko/terraform-skill tests](https://github.com/antonbabenko/terraform-skill/blob/master/tests/baseline-scenarios.md)
-- **Skill Testing Methodology:** See writing-skills skill for complete testing framework
+- **Skill Testing Methodology:** See `baseline-scenarios.md` (scenarios) and `rationalizations.md` (findings log) in this directory.

@@ -176,7 +176,7 @@ Based on [terraform-skill testing approach](https://github.com/antonbabenko/terr
 - Claude Code CLI
 - Java 17+ (Java 25 recommended for new projects)
 - Maven or Gradle
-- Spring Boot 4.0+ familiarity
+- Spring Boot 4.1+ familiarity
 
 ## Evolution Path
 

@@ -28,7 +28,7 @@ Spring Boot 4 (built on Spring Framework 7; Java 17 minimum) includes six major 
 - Better type safety with ParameterizedTypeReference
 - More intuitive assertions
 
-**Template:** `testrestclient-test.java`
+**Template:** `resttestclient-test.java`
 
 **Basic Usage:**
 ```java
@@ -422,7 +422,7 @@ public class ProductController {
 }
 ```
 
-**Testing with TestRestClient:**
+**Testing with RestTestClient:**
 ```java
 client.get()
         .uri("/api/products/search?q=test")
@@ -566,7 +566,7 @@ Boot 4 uses modular starters. Add only what you need:
 <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
 </parent>
 
 <properties>

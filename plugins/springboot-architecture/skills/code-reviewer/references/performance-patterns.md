@@ -444,7 +444,7 @@ public class DashboardService {
 
 ### Structured Concurrency (Java 25 Alternative)
 
-**New in Java 21+**: Structured Concurrency provides a cleaner alternative to CompletableFuture for parallel execution.
+**Preview in Java 25** (JEP 505 — compile and run with `--enable-preview`): Structured Concurrency is a cleaner alternative to CompletableFuture for parallel execution. The API below — `StructuredTaskScope.open(...)` driven by a `Joiner` — is the JDK 25 shape; the earlier previews (Java 21–23) used the now-removed `ShutdownOnFailure` / `ShutdownOnSuccess` classes.
 
 ✅ **Structured Concurrency approach**
 ```java
@@ -454,14 +454,13 @@ public class DashboardService {
     private final OrderService orderService;
     private final ProductService productService;
 
-    public Dashboard getDashboard(Long userId) throws ExecutionException, InterruptedException {
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    public Dashboard getDashboard(Long userId) throws InterruptedException {
+        try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow())) {
             Subtask<User> userTask = scope.fork(() -> userService.findById(userId));
             Subtask<List<Order>> ordersTask = scope.fork(() -> orderService.findByUserId(userId));
             Subtask<List<Product>> productsTask = scope.fork(() -> productService.findRecommended(userId));
 
-            scope.join()           // Wait for all subtasks
-                .throwIfFailed();  // Propagate exceptions
+            scope.join();  // Wait for all; allSuccessfulOrThrow propagates any failure
 
             return new Dashboard(
                 userTask.get(),
@@ -481,7 +480,7 @@ public class DashboardService {
 | **Complex composition chains** | CompletableFuture | `.thenCompose()`, `.thenApply()`, `.exceptionally()` provide fluent API |
 | **Parallel execution of independent tasks** | Structured Concurrency | Cleaner error handling, automatic cancellation, structured lifecycle |
 | **Simple blocking I/O with virtual threads** | Direct blocking calls | Virtual threads make blocking acceptable - no async wrapper needed |
-| **Timeout/cancellation requirements** | Structured Concurrency | Built-in timeout support with `ShutdownOnFailure` |
+| **Timeout/cancellation requirements** | Structured Concurrency | Built-in timeout support via the scope's timeout configuration |
 
 ### Migration Example
 
@@ -497,12 +496,12 @@ public Dashboard getDashboard(Long userId) {
 
 ✅ **Modern Structured Concurrency**
 ```java
-public Dashboard getDashboard(Long userId) throws ExecutionException, InterruptedException {
-    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+public Dashboard getDashboard(Long userId) throws InterruptedException {
+    try (var scope = StructuredTaskScope.open(Joiner.allSuccessfulOrThrow())) {
         var userTask = scope.fork(() -> fetchUser(userId));
         var ordersTask = scope.fork(() -> fetchOrders(userId));
 
-        scope.join().throwIfFailed();
+        scope.join();  // allSuccessfulOrThrow propagates any subtask failure
         return new Dashboard(userTask.get(), ordersTask.get());
     }
 }

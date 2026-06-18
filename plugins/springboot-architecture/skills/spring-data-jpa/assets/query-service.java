@@ -9,6 +9,9 @@
 
 package {{PACKAGE}}.{{MODULE}}.domain;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -257,7 +260,7 @@ public class {{NAME}}QueryService {
             )
         );
 
-        return new Page<>(content, page, size, total);
+        return new PageImpl<>(content, PageRequest.of(page, size), total != null ? total : 0L);
     }
 
     // ==================== EXISTS CHECKS ====================
@@ -363,24 +366,6 @@ class {{NAME}}DetailsMapper implements RowMapper<{{NAME}}DetailsVM> {
 // ============================================================
 // SUPPORTING CLASSES
 // ============================================================
-
-/**
- * Simple Page wrapper.
- */
-public record Page<T>(
-    List<T> content,
-    int page,
-    int size,
-    long total
-) {
-    public int totalPages() {
-        return (int) Math.ceil((double) total / size);
-    }
-
-    public boolean hasNext() {
-        return page < totalPages() - 1;
-    }
-}
 
 /**
  * Search criteria.

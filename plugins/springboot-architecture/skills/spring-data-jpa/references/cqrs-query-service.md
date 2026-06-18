@@ -121,6 +121,19 @@ public List<ProductWithStatsVM> findTopSelling(int limit) {
 }
 ```
 
+The matching view model:
+
+```java
+public record ProductWithStatsVM(
+    Long id,
+    String sku,
+    String name,
+    BigDecimal price,
+    int orderCount,
+    int totalSold
+) {}
+```
+
 ## Pagination
 
 ```java

@@ -721,7 +721,7 @@ byte[] keyBytes = hkdf.deriveData(spec);
 10. **Scoped Values** - Standard in JDK 25 (JEP 506). Adopt for request-scoped context propagation in virtual-thread-heavy applications instead of `ThreadLocal`.
 11. **Module Import Declarations** - Standard in JDK 25 (JEP 511). Only worth adopting for module-heavy codebases.
 12. **Flexible Constructor Bodies** - Standard in JDK 25 (JEP 513). Adopt only when constructor validation logic is genuinely cleaner than helper-method workarounds.
-13. **Key Derivation Function API** - Standard in JDK 25 (JEP 510). Adopt for new security code that needs PBKDF2 / Argon2 / scrypt; otherwise existing `SecretKeyFactory` paths still work.
+13. **Key Derivation Function API** - Standard in JDK 25 (JEP 510). Adopt `javax.crypto.KDF` for HKDF-based key derivation (e.g. deriving session or sub-keys from a master secret). It ships **only HKDF** — password hashing stays on `SecretKeyFactory` (PBKDF1/PBKDF2), and Argon2/scrypt/bcrypt are not included.
 
 ### Low Priority (Evaluate Carefully)
 

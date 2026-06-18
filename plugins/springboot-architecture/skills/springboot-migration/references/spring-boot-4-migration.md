@@ -21,13 +21,21 @@
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
 | **Java** | 17 | 25 (current LTS). Java 26 is the newest feature release (GA March 2026) but is not an LTS — use it only when the project tracks non-LTS releases. |
-| **Spring Boot** | 4.0.0 | 4.0.x (latest stable) |
+| **Spring Boot** | 4.0.0 | 4.1.x (latest stable) |
 | **Jakarta EE** | 11 | 11 |
 | **Servlet** | 6.1 | 6.1 |
 
 **Java Version Note:**
 - Minimum: Java 17
 - Recommended: Java 25 (current LTS) for new compile targets; Java 21 (previous LTS) is still fully supported. Java 26 is the newest feature release (GA 2026-03-17) but is non-LTS.
+
+### Targeting 4.1 (current)
+
+This guide documents the Spring Boot 3 → 4 transition, but **4.1.x is the current target** — land on it rather than 4.0:
+
+- **4.1 removes everything that was deprecated in 4.0.** Coming from 3.x, migrate straight to 4.1 and clear any 4.0-era deprecations as you go; there is no reason to stop at 4.0 first.
+- **Spring Data JPA repository bootstrap.** Deferred (and lazy) repository bootstrap — `spring.data.jpa.repositories.bootstrap-mode=deferred` (or `lazy`) — initializes repositories on a background `AsyncTaskExecutor`, so make sure one is available; otherwise keep the default (eager) bootstrap.
+- Pair Boot 4.1 with Spring Modulith 2.1.x and Testcontainers 2.0.x (see the companion migration guides).
 
 ---
 
@@ -663,15 +671,23 @@ Source: [Core Spring Resilience Features](https://spring.io/blog/2025/09/09/core
 
 ### 1. Jackson Properties
 
-```properties
-# Old
-spring.jackson.read.allow-trailing-comma=true
-spring.jackson.write.indent-output=true
+Spring Boot 4 exposes Jackson 3 configuration as **several distinct property families** (all valid in 4.1). These are *not* old-vs-new spellings of a single key — each family maps to a different Jackson feature enum, so pick the one that matches the feature you want:
 
-# New
+| Property family | Backing feature enum | Use for |
+|-----------------|----------------------|---------|
+| `spring.jackson.read.*` / `spring.jackson.write.*` | `StreamReadFeature` / `StreamWriteFeature` | Common, cross-format stream parsing/generation |
+| `spring.jackson.json.read.*` / `spring.jackson.json.write.*` | `JsonReadFeature` / `JsonWriteFeature` | JSON-specific tokens (e.g. trailing commas) |
+| `spring.jackson.serialization.*` / `spring.jackson.deserialization.*` | `SerializationFeature` / `DeserializationFeature` | Databind behavior (e.g. indent output) |
+
+```properties
+# JSON-specific read feature (JsonReadFeature.ALLOW_TRAILING_COMMA)
 spring.jackson.json.read.allow-trailing-comma=true
-spring.jackson.json.write.indent-output=true
+
+# Pretty-printing is a databind SerializationFeature, NOT a json.write feature
+spring.jackson.serialization.indent-output=true
 ```
+
+> Common pitfall: `INDENT_OUTPUT` is a `SerializationFeature`, so the key is `spring.jackson.serialization.indent-output` — **not** `spring.jackson.json.write.indent-output`.
 
 ### 2. Health Probes (New Default Behavior)
 
@@ -771,7 +787,7 @@ spring.devtools.livereload.enabled=true
 ## Migration Checklist
 
 ### Phase 1: Dependencies
-- [ ] Update Spring Boot version to 4.0.x
+- [ ] Update Spring Boot version to 4.1.x
 - [ ] Rename `spring-boot-starter-web` to `-webmvc` (or use classic)
 - [ ] Rename `spring-boot-starter-aop` to `-aspectj`
 - [ ] Add `spring-boot-starter-restclient` if using RestClient/RestTemplate

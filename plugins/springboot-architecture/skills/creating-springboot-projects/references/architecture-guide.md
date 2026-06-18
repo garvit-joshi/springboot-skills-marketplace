@@ -139,7 +139,7 @@ com.example.app/
 
 ### General Conventions
 
-- Use singular names for packages: `product/` not `products/`
+- Use plural names for feature/module packages: `products/` not `product/`
 - Value Objects are immutable and use `of()` factory method
 - Commands are immutable records
 - View Models are immutable records for API responses

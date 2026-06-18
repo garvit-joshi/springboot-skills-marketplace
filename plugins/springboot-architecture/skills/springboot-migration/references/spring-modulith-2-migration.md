@@ -15,11 +15,11 @@
 
 ## Overview
 
-**IMPORTANT:** Spring Modulith 2.0 migration is **separate** from Spring Boot 4.0 migration. However, Spring Modulith 2.0 **requires** Spring Boot 4.0.
+**IMPORTANT:** Migrating to Spring Modulith 2.x is **separate** from the Spring Boot 4 migration, but the versions are paired: **Spring Modulith 2.1 requires Spring Boot 4.1** (the original 2.0.x line pairs with Spring Boot 4.0). Match the Modulith minor to your Boot minor.
 
 **Migration order:**
-1. Spring Boot 4.0 first
-2. Spring Modulith 2.0 second
+1. Spring Boot 4.1 first
+2. Spring Modulith 2.1 second
 
 ---
 
@@ -29,7 +29,7 @@
 
 ```xml
 <properties>
-    <spring-modulith.version>2.0.0</spring-modulith.version>
+    <spring-modulith.version>2.1.0</spring-modulith.version>
 </properties>
 ```
 
@@ -94,14 +94,14 @@ ALTER TABLE event_publication
 
 **Reference:** [Spring Modulith Appendix - Event Publication Registry Schemas](https://docs.spring.io/spring-modulith/reference/appendix.html)
 
-### 2. Spring Boot 4.0 Baseline Requirement
+### 2. Spring Boot Baseline Requirement
 
-**CRITICAL:** Spring Modulith 2.0 requires Spring Boot 4.0+
+**CRITICAL:** Spring Modulith 2.1 requires Spring Boot 4.1 (the 2.0.x line pairs with Spring Boot 4.0). Keep the Modulith minor aligned with the Boot minor.
 
 **Migration order:**
-1. Migrate to Spring Boot 4.0 first
+1. Migrate to Spring Boot 4.1 first
 2. Update event publication table schema
-3. Upgrade Spring Modulith to 2.0
+3. Upgrade Spring Modulith to 2.1
 
 ### 3. Configuration Property Defaults
 
@@ -499,7 +499,7 @@ ERROR: relation "event_publication" does not exist
 ## Migration Checklist
 
 ### Prerequisites
-- [ ] Spring Boot 4.0 migration complete
+- [ ] Spring Boot 4.1 migration complete
 - [ ] Database migrations tool configured (Flyway/Liquibase)
 - [ ] Backup production database before migration
 
@@ -517,7 +517,7 @@ ERROR: relation "event_publication" does not exist
 - [ ] Run migration on staging/production
 
 ### Phase 2: Update Spring Modulith Version
-- [ ] Update `spring-modulith.version` to 2.0.0 in pom.xml
+- [ ] Update `spring-modulith.version` to 2.1.0 in pom.xml
 - [ ] Run `./mvnw clean install` to download new version
 - [ ] Verify no compilation errors
 

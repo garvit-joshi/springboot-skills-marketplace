@@ -292,15 +292,16 @@ interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 }
 
 // ============================================================
-// @MANYTOMANY - NEVER USE, CREATE JOIN ENTITY INSTEAD
+// @MANYTOMANY - FINE FOR PURE TAGGING; PREFER A JOIN ENTITY WHEN THE LINK HAS DATA
 // ============================================================
 
 /**
- * WRONG: Using @ManyToMany
- * Problems:
- * - Cannot add attributes to relationship
- * - Hard to maintain
- * - Performance issues
+ * Plain @ManyToMany is a valid JPA mapping, but it has no place to store
+ * data about the link itself. For an enrollment — which needs a date,
+ * status, and grade — that is a real limitation:
+ * - Nowhere to add relationship attributes (enrollmentDate, grade, status)
+ * - The join table is managed implicitly, so it is awkward to query directly
+ * For a pure tagging-style link with no extra columns, plain @ManyToMany is fine.
  */
 @Entity
 @Table(name = "students_wrong")
@@ -310,14 +311,14 @@ public class StudentWrong {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    // WRONG: Direct @ManyToMany
+    // Plain @ManyToMany: no column for enrollment attributes (date, grade, status)
     @ManyToMany
     @JoinTable(
         name = "student_course",
         joinColumns = @JoinColumn(name = "student_id"),
         inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    private Set<CourseWrong> courses = new HashSet<>();
+    private Set<Course> courses = new HashSet<>();
 }
 
 /**
@@ -566,10 +567,10 @@ interface FetchExampleRepository extends JpaRepository<FetchExample, Long> {
    - Harder to maintain
    - Query from the owning side instead
 
-4. NEVER USE @MANYTOMANY:
-   - Create explicit join entity
-   - Allows adding attributes to relationship
-   - Better control and maintainability
+4. PREFER A JOIN ENTITY WHEN THE LINK HAS DATA:
+   - Plain @ManyToMany is valid JPA and fine for pure tagging-style links
+   - Use an explicit join entity when the link needs attributes or its own lifecycle
+   - A join entity gives better control, queryability, and maintainability
 
 5. USE IDS INSTEAD OF ENTITIES:
    - For loose coupling between modules
@@ -603,8 +604,8 @@ interface FetchExampleRepository extends JpaRepository<FetchExample, Long> {
 ❌ Bidirectional @OneToMany everywhere
    ✅ Query from many side
 
-❌ @ManyToMany relationships
-   ✅ Create join entity
+❌ @ManyToMany when the link needs attributes or lifecycle
+   ✅ Create a join entity (plain @ManyToMany is fine for pure tagging)
 
 ❌ Mapping every association
    ✅ Use IDs for loose coupling

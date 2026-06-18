@@ -50,7 +50,7 @@ Use Spring Initializr and capture the baseline:
 
 - Project: Maven or Gradle
 - Language: Java
-- Spring Boot: 4.0.x
+- Spring Boot: 4.1.x
 - Java: 25 (recommended — current LTS). Boot 4's minimum is Java 17; use 21 for the previous LTS, or 17 for stricter compatibility. Java 26 (GA 2026-03-17) is the latest feature release but is non-LTS.
 
 Baseline dependencies for most projects:

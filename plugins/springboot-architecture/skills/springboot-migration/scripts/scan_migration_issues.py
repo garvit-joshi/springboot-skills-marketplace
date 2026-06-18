@@ -749,25 +749,6 @@ class MigrationScanner:
             return False
 
         content = ''.join(lines)
-        rel_path = file_path.relative_to(self.project_path)
-
-        # Check for old Jackson properties
-        old_jackson_props = [
-            'spring.jackson.read.',
-            'spring.jackson.write.',
-        ]
-
-        for i, line in enumerate(lines, 1):
-            for old_prop in old_jackson_props:
-                if old_prop in line and not line.strip().startswith('#'):
-                    self.result.add_issue(
-                        "Spring Boot 4 - Configuration",
-                        "WARNING",
-                        str(rel_path),
-                        i,
-                        f"Old Jackson property: {line.strip()}",
-                        "Change spring.jackson.* to spring.jackson.json.*"
-                    )
 
         # Check for Spring Modulith event store config
         has_modulith_jdbc = 'spring.modulith.events.jdbc.schema' in content

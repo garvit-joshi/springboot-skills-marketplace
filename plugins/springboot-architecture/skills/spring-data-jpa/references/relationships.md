@@ -5,7 +5,7 @@
 1. [@ManyToOne (Recommended)](#manytoone-recommended)
 2. [@OneToOne (Use Sparingly)](#onetoone-use-sparingly)
 3. [@OneToMany (Avoid When Possible)](#onetomany-avoid-when-possible)
-4. [@ManyToMany → Join Entity (Required)](#manytomany-join-entity-required)
+4. [@ManyToMany: Prefer an explicit Join Entity](#manytomany-prefer-an-explicit-join-entity)
 5. [@ElementCollection (Value Types)](#elementcollection-value-types)
 6. [Cascade Types](#cascade-types)
 7. [Fetch Strategies](#fetch-strategies)
@@ -127,7 +127,7 @@ public class Order {
 - Collection is always small (<20 items)
 - Need to modify collection from parent
 
-## @ManyToMany → Prefer an explicit Join Entity
+## @ManyToMany: Prefer an explicit Join Entity
 
 Jakarta Persistence 3.2 defines `@ManyToMany` as a first-class relationship with a `LAZY` default, so this is a design recommendation, not a spec restriction. The plain `@ManyToMany` works — the trade-off is that the join table becomes invisible to your domain.
 
@@ -146,7 +146,6 @@ private Set<Tag> tags;
 ```
 
 **Prefer an explicit join entity:**
-```java
 ```java
 @Entity
 @Table(name = "enrollments")

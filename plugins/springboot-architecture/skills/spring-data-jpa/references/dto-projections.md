@@ -139,12 +139,12 @@ To avoid fully-qualified class names in JPQL:
 ```xml
 <dependency>
     <groupId>io.hypersistence</groupId>
-    <artifactId>hypersistence-utils-hibernate-71</artifactId>
-    <version>3.15.2</version>
+    <artifactId>hypersistence-utils-hibernate-73</artifactId>
+    <version>3.15.3</version>
 </dependency>
 ```
 
-> Spring Boot 4.0.x ships Hibernate 7.2.x. Hypersistence publishes `-hibernate-70`, `-hibernate-71`, and `-hibernate-73` (no `-72`); `-hibernate-71` is the closest current fit for Boot 4.0.x. Confirm the latest version on Maven Central before pinning: https://central.sonatype.com/artifact/io.hypersistence/hypersistence-utils-hibernate-71/versions
+> Spring Boot 4.1.x ships Hibernate 7.4.1.Final. Hypersistence publishes `-hibernate-70`, `-hibernate-71`, and `-hibernate-73` (no `-72`, and no `-74` yet); `-hibernate-73` is the newest published module and the closest fit for Boot 4.1.x — verify it runs against 7.4.1. Confirm the latest version on Maven Central before pinning: https://central.sonatype.com/artifact/io.hypersistence/hypersistence-utils-hibernate-73/versions
 
 Register in config:
 ```java

@@ -113,7 +113,10 @@ public record OrderNumber(@JsonValue String value) {
     }
 
     public static OrderNumber generate() {
-        return new OrderNumber("ORD-" + System.currentTimeMillis());
+        // 8-digit zero-padded value, matching the ORD-\d{8} format enforced above.
+        // Use a database sequence for collision-free numbers in production.
+        int n = ThreadLocalRandom.current().nextInt(100_000_000);
+        return new OrderNumber("ORD-%08d".formatted(n));
     }
 }
 ```
